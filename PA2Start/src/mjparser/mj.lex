@@ -37,6 +37,7 @@ EOL=(\r|\n|\r\n)
 
 %%
 "+"         {return new Symbol(sym.PLUS,new SymbolValue(yyline+1, yychar+1, yytext()));}
+"-"         {return new Symbol(sym.MINUS,new SymbolValue(yyline+1, yychar+1, yytext()));}
 
 {EOL} {/*reset pos to -1, if 0, otherwise line 1 starts at 0, rest start at 1 */ yychar=-1;}
 [ \t\r\n\f] { /* ignore white space. */ }
