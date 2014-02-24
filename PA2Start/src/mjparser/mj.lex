@@ -38,6 +38,7 @@ import java_cup.runtime.Symbol;
 
 Identifier = [a-zA-Z_][a-zA-Z0-9_]*
 IntLiteral = [1-9][0-9]* | 0
+Comment = (/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+/) | (\/\/.*)
 EOL=(\r|\n|\r\n)
 
 %%
@@ -120,7 +121,7 @@ EOL=(\r|\n|\r\n)
 
 {Identifier}	{return new Symbol(sym.ID, new SymbolValue(yyline+1, yychar+1, yytext()));}
 {IntLiteral}	{return new Symbol(sym.INT_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-
+{Comment}	{}
 
 {EOL} {/*reset pos to -1, if 0, otherwise line 1 starts at 0, rest start at 1 */ yychar=-1;}
 [ \t\r\n\f] { /* ignore white space. */ }
