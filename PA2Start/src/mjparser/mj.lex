@@ -17,6 +17,10 @@
 
     Wim Bohm and Michelle Strout, 6/2011
   
+  TODO:  is this correct way to set values for all symbols?
+  TODO:  most vales are -1, but some symbols have a value associated with them 
+  TODO:  see http://www.cs.colostate.edu/~cs453/yr2014/MeggyJavaInfo/meggy-java-terms.html
+  TODO:  INT_LITERAL, ID, comments
 */
 
 package mjparser;
@@ -37,7 +41,6 @@ EOL=(\r|\n|\r\n)
 
 %%
 
-/*  Special Characters  */
 "+"         {return new Symbol(sym.PLUS, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "-"         {return new Symbol(sym.MINUS, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "*"			{return new Symbol(sym.TIMES, new SymbolValue(yyline+1, yychar+1, yytext()));}
@@ -56,15 +59,14 @@ EOL=(\r|\n|\r\n)
 "]"			{return new Symbol(sym.RBRACKET, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "."			{return new Symbol(sym.DOT, new SymbolValue(yyline+1, yychar+1, yytext()));}
 
-/*  Reserved words   */
 "main"		{return new Symbol(sym.MAIN, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "boolean"	{return new Symbol(sym.BOOLEAN, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "int"		{return new Symbol(sym.INT, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "byte"		{return new Symbol(sym.BYTE, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"false"		{return new Symbol(sym.FALSE, new SymbolValue(yyline+1, yychar+1, yytext()));}
+"false"		{return new Symbol(sym.FALSE, new SymbolValue(yyline+1, yychar+1, yytext(), 0));}
 "if"		{return new Symbol(sym.IF, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "else"		{return new Symbol(sym.ELSE, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"true"		{return new Symbol(sym.TRUE, new SymbolValue(yyline+1, yychar+1, yytext()));}
+"true"		{return new Symbol(sym.TRUE, new SymbolValue(yyline+1, yychar+1, yytext(), 1));}
 "while"		{return new Symbol(sym.WHILE, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "public"	{return new Symbol(sym.PUBLIC, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "return"	{return new Symbol(sym.RETURN, new SymbolValue(yyline+1, yychar+1, yytext()));}
@@ -78,48 +80,43 @@ EOL=(\r|\n|\r\n)
 "length"	{return new Symbol(sym.LENGTH, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "import"	{return new Symbol(sym.IMPORT, new SymbolValue(yyline+1, yychar+1, yytext()));}
 
-/*  Reserved Phrases  */
-/*  TODO:  is this correct way to set values for all symbols?  */
-/*  TODO:  most vales are -1, but some symbols have a value associated with them */
-/*  TODO:  see http://www.cs.colostate.edu/~cs453/yr2014/MeggyJavaInfo/meggy-java-terms.html */
 "meggy.Meggy"		{return new Symbol(sym.MEGGY, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "Meggy.setPixel"	{return new Symbol(sym.MEGGYSETPIXEL, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "Meggy.setAuxLEDs"	{return new Symbol(sym.MEGGYSETAUXLEDS, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "Meggy.toneStart"	{return new Symbol(sym.MEGGYTONESTART, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "Meggy.delay"		{return new Symbol(sym.MEGGYDELAY, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.getPxiel"	{return new Symbol(sym.MEGGYGETPIXEL, new SymbolValue(yyline+1, yychar+1, yytext()));}
+"Meggy.getPixel"	{return new Symbol(sym.MEGGYGETPIXEL, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "Meggy.checkButton"	{return new Symbol(sym.MEGGYCHECKBUTTON, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.DARK"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.RED"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.ORANGE" {return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.YELLOW"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.GREEN"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.BLUE"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.VIOLET"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Color.WHITE"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Button.B"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Button.A"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Button.Up"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Button.Down"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Button.Left"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Button.Right"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.C3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.Cs3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.D3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.Ds3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.E3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.F3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.Fs3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.G3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.Gs3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.A3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.As3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-"Meggy.Tone.B3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
+"Meggy.Color.DARK"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 0));}
+"Meggy.Color.RED"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 1));}
+"Meggy.Color.ORANGE" {return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 2));}
+"Meggy.Color.YELLOW"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 3));}
+"Meggy.Color.GREEN"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 4));}
+"Meggy.Color.BLUE"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 5));}
+"Meggy.Color.VIOLET"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 6));}
+"Meggy.Color.WHITE"	{return new Symbol(sym.COLOR_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 7));}
+"Meggy.Button.B"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 1));}
+"Meggy.Button.A"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 2));}
+"Meggy.Button.Up"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 4));}
+"Meggy.Button.Down"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 8));}
+"Meggy.Button.Left"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 16));}
+"Meggy.Button.Right"	{return new Symbol(sym.BUTTON_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 32));}
+"Meggy.Tone.C3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 61157));}
+"Meggy.Tone.Cs3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 57724));}
+"Meggy.Tone.D3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 54485));}
+"Meggy.Tone.Ds3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 51427));}
+"Meggy.Tone.E3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 48541));}
+"Meggy.Tone.F3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 45816));}
+"Meggy.Tone.Fs3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 43243));}
+"Meggy.Tone.G3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 40816));}
+"Meggy.Tone.Gs3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 38526));}
+"Meggy.Tone.A3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 36363));}
+"Meggy.Tone.As3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 34323));}
+"Meggy.Tone.B3"	{return new Symbol(sym.TONE_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 32397));}
 "Meggy.Color"	{return new Symbol(sym.MEGGYCOLOR, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "Meggy.Button"	{return new Symbol(sym.MEGGYBUTTON, new SymbolValue(yyline+1, yychar+1, yytext()));}
 "Meggy.Tone"	{return new Symbol(sym.MEGGYTONE, new SymbolValue(yyline+1, yychar+1, yytext()));}
 
-/* TODO:  INT_LITERAL, ID, comments */
 
 
 
