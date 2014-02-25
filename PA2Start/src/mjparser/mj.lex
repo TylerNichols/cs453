@@ -30,8 +30,7 @@ import java_cup.runtime.Symbol;
 
 %{
 	private int getInt(String str) {
-		int res = Integer.parseInt(str);
-		return res;
+		return Integer.parseInt(str);
 	}
 %}
 
