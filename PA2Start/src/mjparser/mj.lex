@@ -17,10 +17,6 @@
 
     Wim Bohm and Michelle Strout, 6/2011
   
-  TODO:  is this correct way to set values for all symbols?
-  TODO:  most vales are -1, but some symbols have a value associated with them 
-  TODO:  see http://www.cs.colostate.edu/~cs453/yr2014/MeggyJavaInfo/meggy-java-terms.html
-  TODO:  INT_LITERAL, ID, comments
 */
 
 package mjparser;
@@ -32,13 +28,21 @@ import java_cup.runtime.Symbol;
 %char
 %public
 
+%{
+	private int getInt(String str) {
+		int res = Integer.parseInt(str);
+		return res;
+	}
+%}
+
 %eofval{
   return new Symbol(sym.EOF, new SymbolValue(yyline, yychar+1, "EOF"));
 %eofval}
 
 Identifier = [a-zA-Z_][a-zA-Z0-9_]*
-IntLiteral = [1-9][0-9]* | 0
-Comment = (/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+/) | (\/\/.*)
+IntLiteral = [1-9][0-9]*
+BlockComment = (/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+/) 
+LineComment = (\/\/.*)
 EOL=(\r|\n|\r\n)
 
 %%
@@ -120,8 +124,10 @@ EOL=(\r|\n|\r\n)
 "Meggy.Tone"	{return new Symbol(sym.MEGGYTONE, new SymbolValue(yyline+1, yychar+1, yytext()));}
 
 {Identifier}	{return new Symbol(sym.ID, new SymbolValue(yyline+1, yychar+1, yytext()));}
-{IntLiteral}	{return new Symbol(sym.INT_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext()));}
-{Comment}	{}
+{IntLiteral}	{return new Symbol(sym.INT_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), getInt(yytext())));}
+"0"		{return new Symbol(sym.INT_LITERAL, new SymbolValue(yyline+1, yychar+1, yytext(), 0));}
+{BlockComment}	{}
+{LineComment}	{}
 
 {EOL} {/*reset pos to -1, if 0, otherwise line 1 starts at 0, rest start at 1 */ yychar=-1;}
 [ \t\r\n\f] { /* ignore white space. */ }
