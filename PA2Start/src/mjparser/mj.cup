@@ -107,20 +107,11 @@ main_class ::=
 		//if (!programName.equals(name)) {
                 //	System.exit(0);
 		//}
-		System.out.println("in ID");
             :}
         LBRACE PUBLIC STATIC VOID MAIN
-		{:
-			System.out.println("Hey");
-		:} 
         LPAREN STRING LBRACKET RBRACKET ID:param RPAREN
-		{:
-			System.out.println("Hey again");
-		:}
         LBRACE 
           {:
-	    System.out.println(param); 
-            System.out.println("Generate prolog using avrH.rtl.s");
             InputStream mainPrologue=null;
             BufferedReader reader=null;
             try {
@@ -154,12 +145,9 @@ main_class ::=
          // {:
          // :}
         RBRACE 
-        //  {:
-        //    parser.out.flush();
-        //  :}
+
 	RBRACE
 	  {:
-            System.out.println("Generate epilogue using avrF.rtl.s");
             InputStream epilogue=null;
             BufferedReader reader=null;
             try {
