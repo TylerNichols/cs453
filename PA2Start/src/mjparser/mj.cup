@@ -81,7 +81,6 @@ terminal UMINUS;
 
 non terminal program;
 non terminal Integer exp;
-non terminal expression;
 non terminal statement;
 non terminal statement_list;
 non terminal main_class;
@@ -135,6 +134,7 @@ main_class ::=
                 while ((line = reader.readLine()) != null) {
                   parser.out.println(line);
                 }
+		parser.out.println();
             } catch ( Exception e2) {
                 e2.printStackTrace();
             }
@@ -187,19 +187,43 @@ statement_list ::=
     ;
 
 statement ::=
-	MEGGYSETPIXEL LPAREN expression:x_arg COMMA
-	expression:y_arg COMMA expression:color
+	MEGGYSETPIXEL LPAREN exp:x_arg COMMA
+	exp:y_arg COMMA exp:color
 	RPAREN SEMI
+	{:
+		parser.out.println("    # Call Meggy.setPixel(x,y,color)");
+		parser.out.println("    pop	r20");
+		parser.out.println("    pop	r22");
+		parser.out.println("    pop	r24");
+		parser.out.println("    call	_Z6DrawPxhhh");
+		parser.out.println("    call	_Z12DisplaySlatev");
+		parser.out.println();
+	:}
     ;
 
-expression ::=
-	LPAREN BYTE RPAREN expression
+exp ::=
+	LPAREN BYTE RPAREN exp
+	{:
+		parser.out.println("    # Cast int to byte");
+		parser.out.println("    pop	r24");
+		parser.out.println("    pop	r25");
+		parser.out.println("    push	r24");
+		parser.out.println();
+	:}
     |   INT_LITERAL:integer
 	{:
-		System.out.println(integer.value);
+		parser.out.println("    # Push integer onto stack");
+		parser.out.println("    ldi	r24,lo8(" + integer.value + ")");
+		parser.out.println("    ldi	r25,hi8(" + integer.value + ")");
+		parser.out.println("    push	r25");
+		parser.out.println("    push	r24");
+		parser.out.println();
 	:}
     |   COLOR_LITERAL:col
 	{:
-		System.out.println("Color: " + col.value);
+		parser.out.println("    # Push color onto stack");
+		parser.out.println("    ldi	r22," + col.value);
+		parser.out.println("    push	r22");
+		parser.out.println();
 	:}
     ;
