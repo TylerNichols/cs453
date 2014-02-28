@@ -81,6 +81,7 @@ terminal UMINUS;
 
 non terminal program;
 non terminal Integer exp;
+non terminal expression;
 non terminal statement;
 non terminal statement_list;
 non terminal main_class;
@@ -103,8 +104,14 @@ main_class ::=
                     = new java.io.PrintStream(
                         new java.io.FileOutputStream(name.lexeme+".java.s"));
                 parser.out = new PrintWriter(sout);
+
                 // Check filename is class name, if not exit with error message
-		//if (!programName.equals(name)) {
+		String progName = new String(parser.programName);
+		//Truncate the '.java' extension from the program name
+		progName = progName.substring(0, progName.indexOf('.'));
+		System.out.println(progName + ", " + name);
+		System.out.println(name.equals(progName));
+		//if (!progName.equals(name)) {
                 //	System.exit(0);
 		//}
             :}
@@ -141,10 +148,7 @@ main_class ::=
                 }
             }
           :}
-        //statement_list:list RBRACE
-         // {:
-         // :}
-        RBRACE 
+        statement_list:list RBRACE
 
 	RBRACE
 	  {:
@@ -177,3 +181,25 @@ main_class ::=
 	:}
     ;
 
+statement_list ::=
+	statement statement_list
+    |   // epsilon
+    ;
+
+statement ::=
+	MEGGYSETPIXEL LPAREN expression:x_arg COMMA
+	expression:y_arg COMMA expression:color
+	RPAREN SEMI
+    ;
+
+expression ::=
+	LPAREN BYTE RPAREN expression
+    |   INT_LITERAL:integer
+	{:
+		System.out.println(integer.value);
+	:}
+    |   COLOR_LITERAL:col
+	{:
+		System.out.println("Color: " + col.value);
+	:}
+    ;
