@@ -148,7 +148,7 @@ main_class ::=
                 }
             }
           :}
-        statement_list:list RBRACE
+        statement_list RBRACE
 
 	RBRACE
 	  {:
@@ -187,8 +187,8 @@ statement_list ::=
     ;
 
 statement ::=
-	MEGGYSETPIXEL LPAREN exp:x_arg COMMA
-	exp:y_arg COMMA exp:color
+	MEGGYSETPIXEL LPAREN exp COMMA
+	exp COMMA exp
 	RPAREN SEMI
 	{:
 		parser.out.println("    # Call Meggy.setPixel(x,y,color)");
@@ -212,7 +212,7 @@ exp ::=
 	:}
     |   INT_LITERAL:integer
 	{:
-		parser.out.println("    # Push integer onto stack");
+		parser.out.println("    # Push integer " + integer.value + " onto stack");
 		parser.out.println("    ldi	r24,lo8(" + integer.value + ")");
 		parser.out.println("    ldi	r25,hi8(" + integer.value + ")");
 		parser.out.println("    push	r25");
