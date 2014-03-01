@@ -1,0 +1,20 @@
+Illegal character: >
+Illegal character: $
+Illegal character: $
+Illegal character: @
+Illegal character: |
+symbol: #47  symbolValue:  [_  at: (2,3)  value: -1]
+symbol: #3  symbolValue:  [-  at: (2,4)  value: -1]
+Illegal character: #
+symbol: #19  symbolValue:  [!  at: (3,1)  value: -1]
+symbol: #35  symbolValue:  [=  at: (3,2)  value: -1]
+Illegal character: |
+Illegal character: |
+Illegal character: ~
+Illegal character: `
+Illegal character: \
+Illegal character: ?
+Illegal character: /
+Illegal character: >
+symbol: #17  symbolValue:  [==  at: (5,4)  value: -1]
+symbol: #16  symbolValue:  [<  at: (5,6)  value: -1]
