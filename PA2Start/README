@@ -12,12 +12,17 @@ No AST is generated or visited; the parser generates the assembly code directly.
 
 
 
-Test cases added:
+Test cases added (in TestCases/ directory):
 ints.in[.OK]
 errints.in[.OK]
 spec.in[.OK]
 errspec.in[.OK]
 errresrv.in[.OK]
+
+Test .java files (in top directory):
+NonMatching.java (fails because filename does not match class name)
+EmptyMain.java (just generates prolog and epilogue)
+PA2bluedot.java (from the ~cs453/public/MJExamples directory)
 
 Regarding int literals, we assumed no leading zeros; in other words, a single 
 zero is the only int literal that begins with a zero (see errints.in test 
