@@ -1,0 +1,27 @@
+Stephen Zapp
+Nate Gillard
+CS453
+PA2
+README
+
+
+The compiler is completely implemented and we expect it to work when run with 
+the commands specified in the assignment sanity check.
+
+No AST is generated or visited; the parser generates the assembly code directly.
+
+
+
+Test cases added:
+ints.in[.OK]
+errints.in[.OK]
+spec.in[.OK]
+errspec.in[.OK]
+errresrv.in[.OK]
+
+Regarding int literals, we assumed no leading zeros; in other words, a single 
+zero is the only int literal that begins with a zero (see errints.in test 
+case). All leading zeros will be scanned separately as single, standalone zeros.
+
+IDs are defined as a letter or underscore followed by 0 or more alphanumeric 
+characters or underscores.
