@@ -109,8 +109,8 @@ main_class ::=
 		//Truncate the '.java' extension from the program name
 		progName = progName.substring(0, progName.indexOf('.'));
 		if (!progName.equals(name.lexeme)) {
-			System.err.println("File name '" + parser.programName +
-			"' does not match class name '" + name.lexeme +
+			System.err.println("File name '" + progName +
+			"'(.java) does not match class name '" + name.lexeme +
 			"'(.java). Exiting.");
                 	System.exit(0);
 		}
