@@ -47,6 +47,7 @@ public class MJDriver {
 
           // and parse
           parser.parse();
+	  System.out.println("Assembly code written to " + parser.programName + ".s");
           /*
                 
           // print ast to file
