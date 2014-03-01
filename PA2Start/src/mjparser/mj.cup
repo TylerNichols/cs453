@@ -108,11 +108,10 @@ main_class ::=
 		String progName = new String(parser.programName);
 		//Truncate the '.java' extension from the program name
 		progName = progName.substring(0, progName.indexOf('.'));
-		System.out.println(progName + ", " + name);
-		System.out.println(name.equals(progName));
-		//if (!progName.equals(name)) {
-                //	System.exit(0);
-		//}
+		if (!progName.equals(name.lexeme)) {
+			System.err.println("File name " + parser.programName + " does not match class name " + name.lexeme + ". Exiting.");	
+                	System.exit(0);
+		}
             :}
         LBRACE PUBLIC STATIC VOID MAIN
         LPAREN STRING LBRACKET RBRACKET ID:param RPAREN
