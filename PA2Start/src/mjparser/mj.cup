@@ -111,7 +111,7 @@ main_class ::=
 		if (!progName.equals(name.lexeme)) {
 			System.err.println("File name '" + parser.programName +
 			"' does not match class name '" + name.lexeme +
-			"'. Exiting.");
+			"'(.java). Exiting.");
                 	System.exit(0);
 		}
             :}
