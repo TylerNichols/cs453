@@ -13,7 +13,8 @@ import java.io.FileReader;
 import java.io.PrintWriter;
 
 import mjparser.*;
-//import ast_visitors.*;
+import ast_visitors.*;
+import ast.node.Program;
 
 public class MJDriver {
 
@@ -46,9 +47,8 @@ public class MJDriver {
           System.out.println("Driver finds input filename: " + parser.programName);
 
           // and parse
-          parser.parse();
+          Program ast_root = (Program) parser.parse().value;
 	  System.out.println("Assembly code written to " + parser.programName + ".s");
-          /*
                 
           // print ast to file
           java.io.PrintStream astout =
@@ -56,7 +56,7 @@ public class MJDriver {
                 new java.io.FileOutputStream(filename + ".ast.dot"));
           ast_root.accept(new DotVisitor(new PrintWriter(astout)));
           System.out.println("Printing AST to " + filename + ".ast.dot");
-
+/*
           // create the symbol table
           BuildSymTable stVisitor = new BuildSymTable();
           ast_root.accept(stVisitor);
@@ -68,7 +68,7 @@ public class MJDriver {
                 new java.io.FileOutputStream(filename + ".ST.dot"));
           System.out.println("Printing symbol table to " + filename + ".ST.dot");
           globalST.outputDot(STout);
-                    
+
           // perform type checking 
           ast_root.accept(new CheckTypes(globalST));
           
@@ -90,20 +90,19 @@ public class MJDriver {
             // determine how to layout variables in AVR program
             ast_root.accept(new AVRallocVars(globalST));
           }
-
+*/
           // generate AVR code that evaluates the program
           java.io.PrintStream avrsout =
               new java.io.PrintStream(
                       new java.io.FileOutputStream(filename + ".s"));
-          ast_root.accept(new AVRgenVisitor(new PrintWriter(avrsout),globalST));
+          ast_root.accept(new AVRgenVisitor(new PrintWriter(avrsout)/*,globalST*/));
           System.out.println("Printing Atmel assembly to " + filename + ".s");
-          */
 
-        } catch(exceptions.SemanticException e) {
+        }/* catch(exceptions.SemanticException e) {
             System.err.println(e.getMessage());
             System.exit(1);
        
-        } catch (Exception e) {
+        } */catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }  

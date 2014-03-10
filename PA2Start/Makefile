@@ -37,7 +37,7 @@ JCC = javac
 JAR = jar
 #-------------------------
 
-all: $(SCANNER).jar $(PROG).jar
+all: $(PROG).jar
 
 source: $(PARSE_DIR)/Yylex.java $(PARSE_DIR)/mj.java
 
@@ -57,7 +57,7 @@ $(SCANNER).jar: $(SRC_DIR)/$(SCANNER)Driver.class
 	mv $(SRC_DIR)/$(SCANNER).jar .
 
 $(PROG).jar: $(SRC_DIR)/$(PROG)Driver.class
-	cd $(SRC_DIR); $(JAR) cmf $(PROG)MainClass.txt $(PROG).jar *.class */*.class avrH.rtl.s avrF.rtl.s -C $(JAVA_CUP_RUNTIME) java_cup  
+	cd $(SRC_DIR); $(JAR) cmf $(PROG)MainClass.txt $(PROG).jar *.class */*.class */*/*.class avrH.rtl.s avrF.rtl.s -C $(JAVA_CUP_RUNTIME) java_cup  
 	cd ..
 	mv $(SRC_DIR)/$(PROG).jar .
 

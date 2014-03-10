@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import ast.node.*;
 
 
 parser code {:
@@ -79,11 +80,11 @@ terminal SymbolValue THIS;
 /* bogus terminal for unary precedence declaration */
 terminal UMINUS;
 
-non terminal program;
-non terminal Integer exp;
-non terminal statement;
-non terminal statement_list;
-non terminal main_class;
+non terminal Program program;
+non terminal IExp exp;
+non terminal IStatement statement;
+non terminal BlockStatement statement_list;
+non terminal MainClass main_class;
 
 /* Declare precedence and associativity  here */
 precedence left TIMES;
@@ -94,137 +95,58 @@ precedence right UMINUS;
 start with program;
 
 program ::= 
-    IMPORT MEGGY SEMI main_class
+    IMPORT:start MEGGY SEMI main_class:mc
+		{:
+			RESULT = new Program(start.line, start.pos, mc);
+		:}
     ;
     
 main_class ::=
-        CLASS ID:name         
-            {: java.io.PrintStream sout 
-                    = new java.io.PrintStream(
-                        new java.io.FileOutputStream(name.lexeme+".java.s"));
-                parser.out = new PrintWriter(sout);
-
-                // Check filename is class name, if not exit with error message
-		String progName = new String(parser.programName);
-		//Truncate the '.java' extension from the program name
-		progName = progName.substring(0, progName.indexOf('.'));
-		if (!progName.equals(name.lexeme)) {
-			System.err.println("ERROR: File name '" + progName +
-			"'(.java) does not match class name '" + name.lexeme +
-			"'. Exiting.");
-                	System.exit(0);
-		}
-            :}
+        CLASS:start ID:name
         LBRACE PUBLIC STATIC VOID MAIN
         LPAREN STRING LBRACKET RBRACKET ID:param RPAREN
-        LBRACE 
-          {:
-            InputStream mainPrologue=null;
-            BufferedReader reader=null;
-            try {
-                // The syntax for loading a text resource file 
-                // from a jar file here:
-                // http://www.rgagnon.com/javadetails/java-0077.html
-                mainPrologue 
-                    = this.getClass().getClassLoader().getResourceAsStream(
-                        "avrH.rtl.s");
-                reader = new BufferedReader(new 
-                    InputStreamReader(mainPrologue));
-
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                  parser.out.println(line);
-                }
-		parser.out.println();
-            } catch ( Exception e2) {
-                e2.printStackTrace();
-            }
-            finally{
-                try{
-                    if(mainPrologue!=null) mainPrologue.close();
-                    if(reader!=null) reader.close();
-                }
-                catch (IOException e) {
-                   e.printStackTrace();
-                }
-            }
-          :}
-        statement_list RBRACE
-
+        LBRACE statement_list:list RBRACE
 	RBRACE
-	  {:
-            InputStream epilogue=null;
-            BufferedReader reader=null;
-            try {
-                epilogue
-                    = this.getClass().getClassLoader().getResourceAsStream(
-                        "avrF.rtl.s");
-                reader = new BufferedReader(new 
-                    InputStreamReader(epilogue));
-
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                  parser.out.println(line);
-                }
-            } catch ( Exception e2) {
-                e2.printStackTrace();
-            }
-            finally{
-                try{
-                    if(epilogue!=null) epilogue.close();
-                    if(reader!=null) reader.close();
-                }
-                catch (IOException e) {
-                   e.printStackTrace();
-                }
-            }
-	    parser.out.flush();
+	{:
+		RESULT = new MainClass(start.line, start.pos, name.lexeme, param.lexeme, list);
 	:}
     ;
 
 statement_list ::=
-	statement statement_list
+
+	statement_list:list statement:s
+	{:
+		
+		list.getStatements().add(s);
+		RESULT = list;
+	:}
     |   // epsilon
+	{:
+		BlockStatement list = new BlockStatement(0, 0);
+		RESULT = list;
+	:}
     ;
 
 statement ::=
-	MEGGYSETPIXEL LPAREN exp COMMA
-	exp COMMA exp
+	MEGGYSETPIXEL:start LPAREN exp:x_arg COMMA
+	exp:y_arg COMMA exp:col
 	RPAREN SEMI
 	{:
-		parser.out.println("    # Call Meggy.setPixel(x,y,color)");
-		parser.out.println("    pop	r20");
-		parser.out.println("    pop	r22");
-		parser.out.println("    pop	r24");
-		parser.out.println("    call	_Z6DrawPxhhh");
-		parser.out.println("    call	_Z12DisplaySlatev");
-		parser.out.println();
+		RESULT = new MeggySetPixel(start.line, start.pos, x_arg, y_arg, col);
 	:}
     ;
 
 exp ::=
-	LPAREN BYTE RPAREN exp
+	LPAREN:start BYTE RPAREN exp:e
 	{:
-		parser.out.println("    # Cast int to byte");
-		parser.out.println("    pop	r24");
-		parser.out.println("    pop	r25");
-		parser.out.println("    push	r24");
-		parser.out.println();
+		RESULT = new ByteCast(start.line, start.pos, e);
 	:}
     |   INT_LITERAL:integer
 	{:
-		parser.out.println("    # Push integer " + integer.value + " onto stack");
-		parser.out.println("    ldi	r24,lo8(" + integer.value + ")");
-		parser.out.println("    ldi	r25,hi8(" + integer.value + ")");
-		parser.out.println("    push	r25");
-		parser.out.println("    push	r24");
-		parser.out.println();
+		RESULT = new IntLiteral(integer.line, integer.pos, integer.lexeme, integer.value);
 	:}
     |   COLOR_LITERAL:col
 	{:
-		parser.out.println("    # Push color onto stack");
-		parser.out.println("    ldi	r22," + col.value);
-		parser.out.println("    push	r22");
-		parser.out.println();
+		RESULT = new ColorLiteral(col.line, col.pos, col.lexeme, col.value);
 	:}
     ;
