@@ -146,6 +146,11 @@ statement ::=
 	{:
 		RESULT = new MeggySetPixel(start.line, start.pos, x_arg, y_arg, col);
 	:}
+    |
+	MEGGYDELAY:start LPAREN exp:arg RPAREN SEMI
+	{:
+		RESULT = new MeggyDelay(start.line, start.pos, arg);
+	:}
     ;
 
 exp ::=
