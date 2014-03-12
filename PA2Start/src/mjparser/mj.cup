@@ -88,6 +88,7 @@ non terminal MainClass main_class;
 
 /* Declare precedence and associativity  here */
 precedence left TIMES;
+precedence left ELSE;
 precedence right UMINUS;
 
 
@@ -140,16 +141,32 @@ statement_list ::=
     ;
 
 statement ::=
-	MEGGYSETPIXEL:start LPAREN exp:x_arg COMMA
+
+	LBRACE statement_list:list RBRACE
+	{:
+		RESULT = list;
+	:}
+    |	MEGGYSETPIXEL:start LPAREN exp:x_arg COMMA
 	exp:y_arg COMMA exp:col
 	RPAREN SEMI
 	{:
 		RESULT = new MeggySetPixel(start.line, start.pos, x_arg, y_arg, col);
 	:}
-    |
-	MEGGYDELAY:start LPAREN exp:arg RPAREN SEMI
+    |	MEGGYDELAY:start LPAREN exp:arg RPAREN SEMI
 	{:
 		RESULT = new MeggyDelay(start.line, start.pos, arg);
+	:}
+    |	IF:start LPAREN exp:e RPAREN statement:s
+	{:
+		RESULT = new IfStatement(start.line, start.pos, e, s, null); 
+	:}
+    |	IF:start LPAREN exp:e RPAREN statement:s ELSE statement:el
+	{:
+		RESULT = new IfStatement(start.line, start.pos, e, s, el);
+	:}
+    |	WHILE:start LPAREN exp:e RPAREN statement:s
+	{:
+		RESULT = new WhileStatement(start.line, start.pos, e, s);
 	:}
     ;
 
