@@ -481,7 +481,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	out.println("    # == is true if we get zero, false otherwise");
 	out.println();
 	// Reuse code gen from subtraction
-	visitMinusExp(new MinusExp(node.getLine(), node.getPos(),
+	outMinusExp(new MinusExp(node.getLine(), node.getPos(),
 				node.getLExp(), node.getRExp()));
 	out.println("    pop r25");
 	out.println("    pop r24");
@@ -1107,7 +1107,20 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outNegExp(NegExp node)
     {
-        defaultOut(node);
+	    out.println("    # Negation");
+	    out.println("    # Push 0 under top 2 bytes and do subtraction");
+	    out.println("    pop r25");
+	    out.println("    pop r24");
+	    out.println("    ldi r22, 0");
+	    out.println("    push r22");
+	    out.println("    push r22");
+	    out.println("    push r24");
+	    out.println("    push r25");
+	    //Create dummy 0 literal for subtraction
+	    IntLiteral zero = new IntLiteral(node.getLine(), node.getPos(), "0", 0);
+	    // Reuse code gen for subtraction
+	    outMinusExp(new MinusExp(node.getLine(), node.getPos(),
+				    zero, node.getExp()));
     }
 
     @Override
