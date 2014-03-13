@@ -171,7 +171,19 @@ statement ::=
     ;
 
 exp ::=
-	LPAREN:start BYTE RPAREN exp:e
+	MINUS:start exp:e
+	{:
+		RESULT = new NegExp(start.line, start.pos, e);
+	:}
+    |	MEGGYGETPIXEL:start LPAREN exp:x_arg COMMA exp:y_arg RPAREN
+	{:
+		RESULT = new MeggyGetPixel(start.line, start.pos, x_arg, y_arg);
+	:}
+    |	MEGGYCHECKBUTTON:start LPAREN exp:arg RPAREN
+	{:
+		RESULT = new MeggyCheckButton(start.line, start.pos, arg);
+	:}
+    |	LPAREN:start BYTE RPAREN exp:e
 	{:
 		RESULT = new ByteCast(start.line, start.pos, e);
 	:}
@@ -182,5 +194,25 @@ exp ::=
     |   COLOR_LITERAL:col
 	{:
 		RESULT = new ColorLiteral(col.line, col.pos, col.lexeme, col.value);
+	:}
+    |	BUTTON_LITERAL:button
+	{:
+		RESULT = new ButtonLiteral(button.line, button.pos, button.lexeme, button.value);
+	:}
+    |   TRUE:t
+	{:
+		RESULT = new TrueLiteral(t.line, t.pos, t.lexeme, t.value);
+	:}
+    |	FALSE:f
+	{:
+		RESULT = new FalseLiteral(f.line, f.pos, f.lexeme, f.value);
+	:}
+    |	NOT:n exp:e
+	{:
+		RESULT = new NotExp(n.line, n.pos, e);
+	:}
+    |	LPAREN exp:e RPAREN
+	{:
+		RESULT = e;
 	:}
     ;

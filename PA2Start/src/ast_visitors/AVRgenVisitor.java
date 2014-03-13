@@ -195,7 +195,10 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outButtonExp(ButtonLiteral node)
     {
-        defaultOut(node);
+	out.println("    # Button Literal " + node);
+	out.println("    ldi    r24, " + node.getIntValue());
+	out.println("    push   r24");
+	out.println();
     }
 
     @Override
@@ -453,7 +456,10 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outFalseExp(FalseLiteral node)
     {
-        defaultOut(node);
+	out.println("    # Push false (0) onto stack");
+	out.println("    ldi r24, 0");
+	out.println("    push r24");
+	out.println();
     }
 
     @Override
@@ -708,7 +714,33 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outMeggyCheckButton(MeggyCheckButton node)
     {
-        defaultOut(node);
+	out.println("    # MeggyCheckButton");
+	out.println("    call    _Z16CheckButtonsDownv");
+	out.println("    lds     r24, " + getButtonName(node.getExp().toString()));
+	out.println("    push    r24");
+	out.println();
+    }
+
+    /* Convert Meggy Button Literal to Assembly name of button */
+    private String getButtonName(String lit)
+    {
+	    String res = "";
+	    switch (lit) {
+		    case "Meggy.Button.A": res = "Button_A";
+					   break;
+		    case "Meggy.Button.B": res = "Button_B";
+					   break;
+		    case "Meggy.Button.Up": res = "Button_Up";
+					   break;
+		    case "Meggy.Button.Down": res = "Button_Down";
+					   break;
+		    case "Meggy.Button.Left": res = "Button_Left";
+					   break;
+		    case "Meggy.Button.Right": res = "Button_Right";
+					   break;
+		    default: break;
+	    }
+	    return res;
     }
 
     public void visitMeggyCheckButton(MeggyCheckButton node)
@@ -752,7 +784,12 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outMeggyGetPixel(MeggyGetPixel node)
     {
-        defaultOut(node);
+	out.println("    # MeggyGetPixel");
+	out.println("    pop    r22");
+	out.println("    pop    r24");
+	out.println("    call   _Z6ReadPixel");
+	out.println("    push   r24");
+	out.println();
     }
 
     public void visitMeggyGetPixel(MeggyGetPixel node)
@@ -1018,7 +1055,12 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outNotExp(NotExp node)
     {
-        defaultOut(node);
+	out.println("    # Not (!)");
+	out.println("    pop r24");
+	out.println("    ldi r22, 1");
+	out.println("    eor r24, r22");
+	out.println("    push r24");
+	out.println();
     }
 
     @Override
@@ -1059,7 +1101,6 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void inProgram(Program node)
     {
-	    System.out.println("Hey");
 	out.println("    .file  \"main.java\"");
 	out.println("__SREG__ = 0x3f");
 	out.println("__SP_H__ = 0x3e");
@@ -1199,7 +1240,10 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outTrueExp(TrueLiteral node)
     {
-        defaultOut(node);
+	out.println("    # Push true (1) onto stack");
+	out.println("    ldi r24, 1");
+	out.println("    push r24");
+	out.println();
     }
 
     @Override
@@ -1260,15 +1304,38 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     @Override
     public void visitWhileStatement(WhileStatement node)
     {
+	String start_label = getLabel();
+	String cond_label = getLabel();
+	String end_label = getLabel();
+
         inWhileStatement(node);
+	out.println(start_label + ":");
         if(node.getExp() != null)
         {
             node.getExp().accept(this);
         }
+	out.println("    # if not(condition)");
+	out.println("    # load a one byte expression off stack");
+	out.println("    pop    r24");
+	out.println("    ldi    r25,0");
+	out.println("    cp     r24, r25");
+	out.println("    # WANT breq MJ_L2");
+	out.println("    brne   MJ_L1");
+	out.println("    jmp    MJ_L2");
+	out.println();
+	out.println("    # while loop body");
+	out.println(cond_label + ":");
+
         if(node.getStatement() != null)
         {
             node.getStatement().accept(this);
         }
+	out.println("    # jump to while test");
+	out.println("    jmp    MJ_L0");
+	out.println("");
+	out.println("    # end of while");
+	out.println(end_label + ":");
+	out.println();
         outWhileStatement(node);
     }
 
