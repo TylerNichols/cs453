@@ -87,9 +87,13 @@ non terminal BlockStatement statement_list;
 non terminal MainClass main_class;
 
 /* Declare precedence and associativity  here */
+precedence left PLUS,MINUS;
 precedence left TIMES;
-precedence left ELSE;
 precedence right UMINUS;
+precedence left ELSE;
+precedence right NOT;
+precedence left EQUAL;
+precedence left AND;
 
 
 /* Meggy Java Grammar */
@@ -171,7 +175,27 @@ statement ::=
     ;
 
 exp ::=
-	MINUS:start exp:e
+	exp:l AND:a exp:r
+	{:
+		RESULT = new AndExp(a.line, a.pos, l, r);
+	:}
+    |	exp:l EQUAL:eq exp:r
+	{:
+		RESULT = new EqualExp(eq.line, eq.pos, l, r);
+	:}
+    |	exp:l PLUS:p exp:r
+	{:
+		RESULT = new PlusExp(p.line, p.pos, l, r);
+	:}
+    |	exp:l MINUS:m exp:r
+	{:
+		RESULT = new MinusExp(m.line, m.pos, l, r);
+	:}
+    |	exp:l TIMES:t exp:r
+	{:
+		RESULT = new MulExp(t.line, t.pos, l, r);
+	:}
+    |	MINUS:start exp:e
 	{:
 		RESULT = new NegExp(start.line, start.pos, e);
 	:}

@@ -49,7 +49,9 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void inAndExp(AndExp node)
     {
-        defaultIn(node);
+	out.println("    # && operator");
+	out.println("    # &&: left operand");
+	out.println();
     }
 
     public void outAndExp(AndExp node)
@@ -65,10 +67,31 @@ public class AVRgenVisitor extends DepthFirstVisitor {
         {
             node.getLExp().accept(this);
         }
+        out.println("    # &&: if left operand is false do not eval right");
+        out.println("    # load a one byte expression off stack");
+        out.println("    pop    r24");
+        out.println("    # push one byte expression onto stack");
+        out.println("    push   r24");
+        out.println("    # compare left exp with zero");
+        out.println("    ldi r25, 0");
+        out.println("    cp    r24, r25");
+
+	String false_label = getLabel();
+	String true_label = getLabel();
+	out.println("    brne " + true_label);
+	out.println("    jmp " + false_label);
+	out.println();
+	out.println(true_label + ":");
+	out.println("    # &&: right operand");
+	out.println();
+
         if(node.getRExp() != null)
         {
             node.getRExp().accept(this);
         }
+	out.println("    # end label for &&");
+	out.println(false_label + ":");
+	out.println();
         outAndExp(node);
     }
 
@@ -425,7 +448,9 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void inEqualExp(EqualExp node)
     {
-        defaultIn(node);
+	out.println("    # == operator");
+	out.println("    # ==: left operand");
+	out.println();
     }
 
     public void outEqualExp(EqualExp node)
@@ -441,10 +466,40 @@ public class AVRgenVisitor extends DepthFirstVisitor {
         {
             node.getLExp().accept(this);
         }
+	out.println("    # ==: right operand");
+	out.println();
+
         if(node.getRExp() != null)
         {
             node.getRExp().accept(this);
         }
+
+	String done_label = getLabel();
+	String false_label = getLabel();
+
+	out.println("    # ==: pop both operands and subtract");
+	out.println("    # == is true if we get zero, false otherwise");
+	out.println();
+	// Reuse code gen from subtraction
+	visitMinusExp(new MinusExp(node.getLine(), node.getPos(),
+				node.getLExp(), node.getRExp()));
+	out.println("    pop r25");
+	out.println("    pop r24");
+	out.println("    ldi r22, 0");
+	out.println("    cp r24, r22");
+	out.println("    brne " + false_label);
+	out.println("    cp r25, r22");
+	out.println("    brne " + false_label);
+	out.println("    ldi r24, 1");
+	out.println("    jmp " + done_label);
+	out.println(false_label + ":");
+	out.println("    ldi r24, 0");
+	out.println("    push r24");
+	out.println("    # end label for ==");
+	out.println(done_label + ":");
+	out.println("    push r24");
+	out.println();
+	
         outEqualExp(node);
     }
 
@@ -942,7 +997,18 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outMinusExp(MinusExp node)
     {
-        defaultOut(node);
+	out.println("    # Subtract the two ints on the stack");
+	out.println("    pop    r18");
+	out.println("    pop    r19");
+	out.println("    pop    r24");
+	out.println("    pop    r25");
+	out.println("    # Do subtract operation");
+	out.println("    sub    r24, r18");
+	out.println("    sbc    r25, r19");
+	out.println("    # push two byte expression onto stack");
+	out.println("    push   r25");
+	out.println("    push   r24");
+	out.println();
     }
 
     @Override
@@ -967,7 +1033,14 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outMulExp(MulExp node)
     {
-        defaultOut(node);
+	out.println("    # Multiply two bytes on stack");
+	out.println("    pop    r18");
+	out.println("    pop    r24");
+	out.println("    muls   r18, r24");
+	out.println("    # Product is 2-byte int in r1:r0");
+	out.println("    push   r1");
+	out.println("    push   r0");
+	out.println();
     }
 
     @Override
@@ -1081,7 +1154,18 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outPlusExp(PlusExp node)
     {
-        defaultOut(node);
+	out.println("    # Add the two ints on the stack");
+	out.println("    pop    r18");
+	out.println("    pop    r19");
+	out.println("    pop    r24");
+	out.println("    pop    r25");
+	out.println("    # Do add operation");
+	out.println("    add    r24, r18");
+	out.println("    adc    r25, r19");
+	out.println("    # push two byte expression onto stack");
+	out.println("    push   r25");
+	out.println("    push   r24");
+	out.println();
     }
 
     @Override
