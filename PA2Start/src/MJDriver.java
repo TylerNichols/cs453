@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import mjparser.*;
 import ast_visitors.*;
 import ast.node.Program;
+import symtable.*;
 
 public class MJDriver {
 
@@ -62,16 +63,16 @@ public class MJDriver {
           ast_root.accept(stVisitor);
           symtable.SymTable globalST = stVisitor.getSymTable();
           
-          // print ast to file
+          // print ST to file
           java.io.PrintStream STout =
             new java.io.PrintStream(
                 new java.io.FileOutputStream(filename + ".ST.dot"));
           System.out.println("Printing symbol table to " + filename + ".ST.dot");
           globalST.outputDot(STout);
-
+*/
           // perform type checking 
-          ast_root.accept(new CheckTypes(globalST));
-          
+          ast_root.accept(new CheckTypes(new SymTable()));
+ /*         
           // Determine whether to do register allocation or not.
           if ( args.length == 2 && args[0].equals("--regalloc") ) {
               // trying out register allocation

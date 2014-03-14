@@ -79,6 +79,8 @@ terminal SymbolValue THIS;
 
 /* bogus terminal for unary precedence declaration */
 terminal UMINUS;
+/* bogus terminal for byte cast */
+terminal BYTECAST;
 
 non terminal Program program;
 non terminal IExp exp;
@@ -87,13 +89,13 @@ non terminal BlockStatement statement_list;
 non terminal MainClass main_class;
 
 /* Declare precedence and associativity  here */
+precedence left ELSE;
+precedence left AND;
+precedence left EQUAL;
 precedence left PLUS,MINUS;
 precedence left TIMES;
-precedence right UMINUS;
-precedence left ELSE;
-precedence right NOT;
-precedence left EQUAL;
-precedence left AND;
+precedence right BYTECAST;
+precedence right UMINUS, NOT;
 
 
 /* Meggy Java Grammar */
@@ -199,6 +201,7 @@ exp ::=
 	{:
 		RESULT = new NegExp(start.line, start.pos, e);
 	:}
+	%prec UMINUS
     |	MEGGYGETPIXEL:start LPAREN exp:x_arg COMMA exp:y_arg RPAREN
 	{:
 		RESULT = new MeggyGetPixel(start.line, start.pos, x_arg, y_arg);
@@ -211,6 +214,7 @@ exp ::=
 	{:
 		RESULT = new ByteCast(start.line, start.pos, e);
 	:}
+	%prec BYTECAST
     |   INT_LITERAL:integer
 	{:
 		RESULT = new IntLiteral(integer.line, integer.pos, integer.lexeme, integer.value);
