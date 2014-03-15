@@ -1,32 +1,12 @@
 Stephen Zapp
-Nate Gillard
-CS453
-PA2
-README
+CS453 PA3
 
+The compiler is completely implemented; all regression tests pass except:
 
-The compiler is completely implemented and we expect it to work when run with 
-the commands specified in the assignment sanity check.
-
-No AST is generated or visited; the parser generates the assembly code directly.
-
-
-
-Test cases added (in TestCases/ directory):
-ints.in[.OK]
-errints.in[.OK]
-spec.in[.OK]
-errspec.in[.OK]
-errresrv.in[.OK]
-
-Test .java files (in top directory):
-NonMatching.java (fails because filename does not match class name)
-EmptyMain.java (just generates prolog and epilogue)
-PA2bluedot.java (from the ~cs453/public/MJExamples directory)
-
-Regarding int literals, we assumed no leading zeros; in other words, a single 
-zero is the only int literal that begins with a zero (see errints.in test 
-case). All leading zeros will be scanned separately as single, standalone zeros.
-
-IDs are defined as a letter or underscore followed by 0 or more alphanumeric 
-characters or underscores.
+For some reason, CondExpr.java (off the class website) executes the full 25
+function calls (defined in meggy/arg_opts) when compiled with my compiler but
+only executes each function call once when compiled with javac (regardless of
+the number in arg_opts). So the output from my compiled program has the
+correct lines, but when arg_opts is > 5 they will be repeated and this shows
+in the diff of the regression test. Not sure why the javac version seems to
+ignore the arg_opts specification here.

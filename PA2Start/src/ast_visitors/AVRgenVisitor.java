@@ -500,18 +500,24 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	String done_label = getLabel();
 	String false_label = getLabel();
 
-	out.println("    # ==: pop both operands and subtract");
-	out.println("    # == is true if we get zero, false otherwise");
+	out.println("    # ==: pop both operands and promote bytes to ints");
+	out.println("    # ==: compare operands");
 	out.println();
-	// Reuse code gen from subtraction
-	outMinusExp(new MinusExp(node.getLine(), node.getPos(),
-				node.getLExp(), node.getRExp()));
 	out.println("    pop r24");
-	out.println("    pop r25");
-	out.println("    ldi r22, 0");
+	if (currentST.getExpType(node.getRExp()) == Type.INT) {
+		out.println("     pop r25");
+	} else {
+		byteToInt("r24", "r25");
+	}
+	out.println("    pop r22");
+	if (currentST.getExpType(node.getLExp()) == Type.INT) {
+		out.println("     pop r23");
+	} else {
+		byteToInt("r22", "r23");
+	}
 	out.println("    cp r24, r22");
 	out.println("    brne " + false_label);
-	out.println("    cp r25, r22");
+	out.println("    cp r25, r23");
 	out.println("    brne " + false_label);
 	out.println("    ldi r24, 1");
 	out.println("    jmp " + done_label);

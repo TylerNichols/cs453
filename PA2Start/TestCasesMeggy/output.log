@@ -77,3 +77,5 @@ instructions.RuntimeError: Could not find function call _Z6ReadPixel
 2014-03-14 21:02:12,853 [main] FATAL ui.Main - Assembly File passed in does not exist.
 2014-03-14 21:04:38,152 [main] FATAL ui.Main - Assembly File passed in does not exist.
 2014-03-14 21:04:40,179 [main] FATAL ui.Main - Assembly File passed in does not exist.
+2014-03-14 21:21:44,892 [main] FATAL ui.Main - Assembly File passed in does not exist.
+2014-03-14 21:21:46,923 [main] FATAL ui.Main - Assembly File passed in does not exist.
