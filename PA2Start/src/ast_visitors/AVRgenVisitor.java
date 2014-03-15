@@ -17,16 +17,19 @@ import ast.visitor.DepthFirstVisitor;
 
 import java.util.*;
 import java.io.PrintWriter;
+import symtable.*;
 
 public class AVRgenVisitor extends DepthFirstVisitor {
 
    private static int labNum = 0;
 
    private PrintWriter out;
+   private SymTable currentST;
 
-   public AVRgenVisitor(PrintWriter out)
+   public AVRgenVisitor(PrintWriter out, SymTable symT)
    {
 	   this.out = out;
+	   this.currentST = symT;
    }
 
    /** A helper to return the current label and then increment it
@@ -37,6 +40,23 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	   labNum++;
 	   return currLabel;
    }
+
+   // Code to promote bytes to ints
+   private void byteToInt(String loReg, String hiReg) {
+	   String neg_label = getLabel();
+	   String done_label = getLabel();
+
+	   out.println("    # Promote byte to int");
+	   out.println("    tst " + loReg);
+	   out.println("    brlt " + neg_label);
+	   out.println("    ldi " + hiReg + ", 0");
+	   out.println("    jmp " + done_label);
+	   out.println(neg_label + ":");
+	   out.println("    ldi " + hiReg + ", hi8(-1)");
+	   out.println(done_label + ":");
+	   out.println();
+   }
+
     public void defaultIn(Node node)
     {
         // Do nothing
@@ -255,6 +275,9 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outByteCast(ByteCast node)
     {
+	if (currentST.getExpType(node.getExp()) == Type.BYTE) {
+		return;
+	}
 	out.println("    # Cast int to byte");
 	out.println("    pop	r24");
 	out.println("    pop	r25");
@@ -483,8 +506,8 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	// Reuse code gen from subtraction
 	outMinusExp(new MinusExp(node.getLine(), node.getPos(),
 				node.getLExp(), node.getRExp()));
-	out.println("    pop r25");
 	out.println("    pop r24");
+	out.println("    pop r25");
 	out.println("    ldi r22, 0");
 	out.println("    cp r24, r22");
 	out.println("    brne " + false_label);
@@ -817,7 +840,11 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     {
 	    out.println("    # Call Meggy.delay()");
 	    out.println("    pop    r24");
-	    out.println("    pop    r25");
+	    if (currentST.getExpType(node.getExp()) == Type.BYTE) {
+		    byteToInt("r24", "r25");
+	    } else {
+		    out.println("    pop    r25");
+	    }
 	    out.println("    call   _Z8delay_msj");
 	    out.println();
     }
@@ -842,7 +869,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	out.println("    # MeggyGetPixel");
 	out.println("    pop    r22");
 	out.println("    pop    r24");
-	out.println("    call   _Z6ReadPixel");
+	out.println("    call   _Z6ReadPxhh");
 	out.println("    push   r24");
 	out.println();
     }
@@ -999,9 +1026,19 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     {
 	out.println("    # Subtract the two ints on the stack");
 	out.println("    pop    r18");
-	out.println("    pop    r19");
+	if ((currentST.getExpType(node.getRExp()) == Type.BYTE) ||
+       		(currentST.getExpType(node.getRExp()) == Type.COLOR)) {
+		byteToInt("r18", "r19");
+	} else {
+		out.println("    pop    r19");
+	}
 	out.println("    pop    r24");
-	out.println("    pop    r25");
+	if ((currentST.getExpType(node.getLExp()) == Type.BYTE) ||
+       		(currentST.getExpType(node.getRExp()) == Type.COLOR)) {
+		byteToInt("r24", "r25");
+	} else {
+		out.println("    pop    r25");
+	}
 	out.println("    # Do subtract operation");
 	out.println("    sub    r24, r18");
 	out.println("    sbc    r25, r19");
@@ -1109,13 +1146,19 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     {
 	    out.println("    # Negation");
 	    out.println("    # Push 0 under top 2 bytes and do subtraction");
-	    out.println("    pop r25");
 	    out.println("    pop r24");
+	    if (currentST.getExpType(node.getExp()) == Type.INT) {
+		    //byteToInt("r24", "r25");
+	    //} else {
+		    out.println("    pop r25");
+	    }
 	    out.println("    ldi r22, 0");
 	    out.println("    push r22");
 	    out.println("    push r22");
+	    if (currentST.getExpType(node.getExp()) == Type.INT) {
+		    out.println("    push r25");
+	    }
 	    out.println("    push r24");
-	    out.println("    push r25");
 	    //Create dummy 0 literal for subtraction
 	    IntLiteral zero = new IntLiteral(node.getLine(), node.getPos(), "0", 0);
 	    // Reuse code gen for subtraction
@@ -1165,13 +1208,25 @@ public class AVRgenVisitor extends DepthFirstVisitor {
         defaultIn(node);
     }
 
+
     public void outPlusExp(PlusExp node)
     {
 	out.println("    # Add the two ints on the stack");
 	out.println("    pop    r18");
-	out.println("    pop    r19");
+
+	if (currentST.getExpType(node.getRExp()) == Type.BYTE) {
+		byteToInt("r18", "r19");
+	} else {
+		out.println("    pop    r19");
+	}
+
 	out.println("    pop    r24");
-	out.println("    pop    r25");
+	if (currentST.getExpType(node.getLExp()) == Type.BYTE) {
+		byteToInt("r24", "r25");
+	} else {
+		out.println("    pop    r25");
+	}
+
 	out.println("    # Do add operation");
 	out.println("    add    r24, r18");
 	out.println("    adc    r25, r19");
@@ -1217,6 +1272,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	out.println("/* prologue: function */");
 	out.println("    call _Z18MeggyJrSimpleSetupv ");
 	out.println("    /* Need to call this so that the meggy library gets set up */");
+	out.println();
     }
 
     public void outProgram(Program node)

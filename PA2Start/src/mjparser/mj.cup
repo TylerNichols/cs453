@@ -94,8 +94,8 @@ precedence left AND;
 precedence left EQUAL;
 precedence left PLUS,MINUS;
 precedence left TIMES;
-precedence right BYTECAST;
 precedence right UMINUS, NOT;
+precedence right BYTECAST;
 
 
 /* Meggy Java Grammar */
