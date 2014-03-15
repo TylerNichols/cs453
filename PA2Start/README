@@ -10,3 +10,23 @@ the number in arg_opts). So the output from my compiled program has the
 correct lines, but when arg_opts is > 5 they will be repeated and this shows
 in the diff of the regression test. Not sure why the javac version seems to
 ignore the arg_opts specification here.
+
+TestCases added to TestCasesMeggy/:
+Byte.java
+CondExpr.java
+If.java
+IfStmt.java
+PA2FlowerSimple.java
+PA2bluedot.java
+PA2error.java
+PA3buttondot.java
+PA3ifdots.java
+PA3simple.java
+PA3testif.java
+
+TestCases added to TestCasesMeggy/WorkingErrorTestCases:
+PA2error.java
+bytecast.java
+delaytest.java
+eqtest.java
+promote.java

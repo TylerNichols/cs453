@@ -1032,15 +1032,13 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     {
 	out.println("    # Subtract the two ints on the stack");
 	out.println("    pop    r18");
-	if ((currentST.getExpType(node.getRExp()) == Type.BYTE) ||
-       		(currentST.getExpType(node.getRExp()) == Type.COLOR)) {
+	if (currentST.getExpType(node.getRExp()) == Type.BYTE) {
 		byteToInt("r18", "r19");
 	} else {
 		out.println("    pop    r19");
 	}
 	out.println("    pop    r24");
-	if ((currentST.getExpType(node.getLExp()) == Type.BYTE) ||
-       		(currentST.getExpType(node.getRExp()) == Type.COLOR)) {
+	if (currentST.getExpType(node.getLExp()) == Type.BYTE) {
 		byteToInt("r24", "r25");
 	} else {
 		out.println("    pop    r25");
