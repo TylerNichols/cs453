@@ -87,11 +87,23 @@ non terminal IExp exp;
 non terminal IStatement statement;
 non terminal BlockStatement statement_list;
 non terminal MainClass main_class;
+non terminal LinkedList<IClassDecl> class_decl_list;
+non terminal TopClassDecl class_decl;
+non terminal LinkedList<MethodDecl> method_decl_list;
+non terminal MethodDecl method_decl;
+non terminal LinkedList<Formal> arg_list;
+non terminal IExp return_stmt;
+non terminal LinkedList<IExp> exp_list;
+non terminal LinkedList<IExp> comma_exp_list;
+non terminal LinkedList<Formal> comma_list;
+non terminal Formal formal;
+non terminal IType type;
 
 /* Declare precedence and associativity  here */
 precedence left ELSE;
 precedence left AND;
 precedence left EQUAL;
+precedence left LT;
 precedence left PLUS,MINUS;
 precedence left TIMES;
 precedence right UMINUS, NOT;
@@ -102,9 +114,9 @@ precedence right BYTECAST;
 start with program;
 
 program ::= 
-    IMPORT:start MEGGY SEMI main_class:mc
+    IMPORT:start MEGGY SEMI main_class:mc class_decl_list:clist
 		{:
-			RESULT = new Program(start.line, start.pos, mc);
+			RESULT = new Program(start.line, start.pos, mc, clist);
 		:}
     ;
     
@@ -130,12 +142,90 @@ main_class ::=
 		RESULT = new MainClass(start.line, start.pos, name.lexeme, param.lexeme, list);
 	:}
     ;
-
+class_decl_list ::=
+	class_decl_list:list class_decl:cl
+	{:
+		list.add(cl);
+		RESULT = list;
+	:}
+	| //epsilon
+	{:
+		LinkedList<IClassDecl> list = new LinkedList<IClassDecl>();
+		RESULT = list;
+	:}
+    ;
+class_decl ::=
+	CLASS:start ID:name LBRACE method_decl_list:list RBRACE
+	{:
+		RESULT = new TopClassDecl(start.line, start.pos, name.lexeme, null, list);
+	:}
+    ;
+method_decl_list ::=
+	method_decl_list:list method_decl:met
+	{:
+		list.add(met);
+		RESULT = list;
+	:}
+	| //epsilon
+	{:
+		LinkedList<MethodDecl> list = new LinkedList<MethodDecl>();
+		RESULT = list;
+	:}
+    ;
+method_decl ::=
+	PUBLIC:start type:ret ID:name LPAREN arg_list:formals RPAREN
+	LBRACE statement_list:stmts return_stmt:retexp RBRACE
+	{:
+		RESULT = new MethodDecl(start.line, start.pos, ret, name.lexeme, formals, null, stmts.getStatements(), retexp);
+	:}
+    ;
+return_stmt ::=
+	RETURN:start exp:e SEMI
+	{:
+		RESULT = e;
+	:}
+	| // epsilon
+	{:
+		RESULT = null;
+	:}
+    ;
+arg_list ::=
+	formal:f comma_list:list
+	{:
+		list.addFirst(f);
+		if (!list.isEmpty()) {
+			list.addAll(list);
+		}
+		RESULT = list;
+	:}
+	| // epsilon
+	{:
+		LinkedList<Formal> list = new LinkedList<Formal>();
+		RESULT = list;
+	:}
+    ;
+comma_list ::=
+	comma_list:cl COMMA formal:f
+	{:
+		cl.add(f);
+		RESULT = cl;
+	:}
+	| // epsilon
+	{:
+		LinkedList<Formal> list = new LinkedList<Formal>();
+		RESULT = list;
+	:}
+    ;
+formal ::=
+	type:t ID:name
+	{:
+		RESULT = new Formal(t.getLine(), t.getPos(), t, name.lexeme);
+	:}
+    ;
 statement_list ::=
 
 	statement_list:list statement:s
 	{:
-		
 		list.getStatements().add(s);
 		RESULT = list;
 	:}
@@ -145,7 +235,36 @@ statement_list ::=
 		RESULT = list;
 	:}
     ;
-
+type ::=
+	BOOLEAN:b
+	{:
+		RESULT = new BoolType(b.line, b.pos);
+	:}
+    |   BYTE:b
+	{:
+		RESULT = new ByteType(b.line, b.pos);
+	:}
+    |   INT:i
+	{:
+		RESULT = new IntType(i.line, i.pos);
+	:}
+    |   VOID:v
+	{:
+		RESULT = new VoidType(v.line, v.pos);
+	:}
+    |   MEGGYCOLOR:c
+	{:
+		RESULT = new ColorType(c.line, c.pos);
+	:}
+    |   MEGGYBUTTON:b
+	{:
+		RESULT = new ButtonType(b.line, b.pos);
+	:}
+    |   MEGGYTONE:t
+	{:
+		RESULT = new ToneType(t.line, t.pos);
+	:}
+    ;
 statement ::=
 
 	LBRACE statement_list:list RBRACE
@@ -162,6 +281,10 @@ statement ::=
 	{:
 		RESULT = new MeggyDelay(start.line, start.pos, arg);
 	:}
+    |	exp:e DOT ID:name LPAREN exp_list:list RPAREN SEMI
+	{:
+		RESULT = new CallStatement(e.getLine(), e.getPos(), e, name.lexeme, list);
+	:}
     |	IF:start LPAREN exp:e RPAREN statement:s
 	{:
 		RESULT = new IfStatement(start.line, start.pos, e, s, null); 
@@ -175,11 +298,41 @@ statement ::=
 		RESULT = new WhileStatement(start.line, start.pos, e, s);
 	:}
     ;
-
+exp_list ::=
+	exp:e comma_exp_list:list
+	{:
+		list.addFirst(e);
+		if (!list.isEmpty()) {
+			list.addAll(list);
+		}
+		RESULT = list;
+	:}
+	| // epsilon
+	{:
+		LinkedList<IExp> list = new LinkedList<IExp>();
+		RESULT = list;
+	:}
+    ;
+comma_exp_list ::=
+	comma_exp_list:cl COMMA exp:e
+	{:
+		cl.add(e);
+		RESULT = cl;
+	:}
+	| // epsilon
+	{:
+		LinkedList<IExp> list = new LinkedList<IExp>();
+		RESULT = list;
+	:}
+    ;
 exp ::=
 	exp:l AND:a exp:r
 	{:
 		RESULT = new AndExp(a.line, a.pos, l, r);
+	:}
+    |	exp:l LT:lt exp:r
+	{:
+		RESULT = new LtExp(lt.line, lt.pos, l, r);
 	:}
     |	exp:l EQUAL:eq exp:r
 	{:
@@ -202,6 +355,10 @@ exp ::=
 		RESULT = new NegExp(start.line, start.pos, e);
 	:}
 	%prec UMINUS
+    |	exp:e DOT ID:name LPAREN exp_list:list RPAREN
+	{:
+		RESULT = new CallExp(e.getLine(), e.getPos(), e, name.lexeme, list);
+	:}
     |	MEGGYGETPIXEL:start LPAREN exp:x_arg COMMA exp:y_arg RPAREN
 	{:
 		RESULT = new MeggyGetPixel(start.line, start.pos, x_arg, y_arg);
@@ -234,6 +391,18 @@ exp ::=
     |	FALSE:f
 	{:
 		RESULT = new FalseLiteral(f.line, f.pos, f.lexeme, f.value);
+	:}
+    |	ID:name
+	{:
+		RESULT = new IdLiteral(name.line, name.pos, name.lexeme);
+	:}
+    |	THIS:t
+	{:
+		RESULT = new ThisLiteral(t.line, t.pos, t.lexeme, t.value);
+	:}
+    |	NEW:start ID:name LPAREN RPAREN
+	{:
+		RESULT = new NewExp(start.line, start.pos, name.lexeme);
 	:}
     |	NOT:n exp:e
 	{:

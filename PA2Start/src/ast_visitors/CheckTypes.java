@@ -19,7 +19,7 @@ import ast.visitor.DepthFirstVisitor;
 import java.util.*;
 
 import symtable.SymTable;
-import symtable.Type;
+import symtable.*;
 import exceptions.InternalException;
 import exceptions.SemanticException;
 
@@ -27,13 +27,16 @@ public class CheckTypes extends DepthFirstVisitor
 {
     
    private SymTable mCurrentST;
+   private ClassSTE currClass;
    
    public CheckTypes(SymTable st) {
      if(st==null) {
           throw new InternalException("unexpected null argument");
       }
       mCurrentST = st;
+      currClass = null;
    }
+
    
    //========================= Overriding the visitor interface
 
@@ -285,4 +288,351 @@ public class CheckTypes extends DepthFirstVisitor
 	   }
 	   this.mCurrentST.setExpType(node, Type.VOID);
    }
+
+    public void inTopClassDecl(TopClassDecl node)
+    {
+	    //Scope sc = new Scope(mCurrentST.peek());
+	    //ClassSTE ste = new ClassSTE(node.getName(), sc, false);
+	    //currClass = ste;
+	    mCurrentST.pushScope(node.getName());
+	    currClass = mCurrentST.lookupClass(node.getName());
+    }
+
+    public void outTopClassDecl(TopClassDecl node)
+    {
+	    mCurrentST.popScope();
+    }
+
+    @Override
+    public void visitTopClassDecl(TopClassDecl node)
+    {
+        inTopClassDecl(node);
+        {
+            List<VarDecl> copy = new ArrayList<VarDecl>(node.getVarDecls());
+            for(VarDecl e : copy)
+            {
+                e.accept(this);
+            }
+        }
+        {
+            List<MethodDecl> copy = new ArrayList<MethodDecl>(node.getMethodDecls());
+            for(MethodDecl e : copy)
+            {
+                e.accept(this);
+            }
+        }
+        outTopClassDecl(node);
+    }
+
+    public void inMethodDecl(MethodDecl node)
+    {
+	    mCurrentST.pushScope(node.getName());
+    }
+
+    public void outMethodDecl(MethodDecl node)
+    {
+	    MethodSTE methodSTE = (MethodSTE)mCurrentST.lookup(node.getName());
+	    if (methodSTE.getReturnType() == this.mCurrentST.getExpType(node.getExp())) {
+		    this.mCurrentST.setExpType(node, methodSTE.getReturnType());
+	    } else if ((methodSTE.getReturnType() == Type.VOID) && (node.getExp() == null)) {
+		    this.mCurrentST.setExpType(node, Type.VOID);
+	    } else throw new SemanticException("Return value of method '" + node.getName() +
+			    "' does not match return type");
+	    mCurrentST.popScope();
+    }
+
+    @Override
+    public void visitMethodDecl(MethodDecl node)
+    {
+        inMethodDecl(node);
+        if(node.getType() != null)
+        {
+            node.getType().accept(this);
+        }
+        {
+            List<Formal> copy = new ArrayList<Formal>(node.getFormals());
+            for(Formal e : copy)
+            {
+                e.accept(this);
+            }
+        }
+        {
+            List<VarDecl> copy = new ArrayList<VarDecl>(node.getVarDecls());
+            for(VarDecl e : copy)
+            {
+                e.accept(this);
+            }
+        }
+        {
+            List<IStatement> copy = new ArrayList<IStatement>(node.getStatements());
+            for(IStatement e : copy)
+            {
+                e.accept(this);
+            }
+        }
+        if(node.getExp() != null)
+        {
+            node.getExp().accept(this);
+        }
+        outMethodDecl(node);
+    }
+
+    public void inIdLiteral(IdLiteral node)
+    {
+        defaultIn(node);
+    }
+
+    public void outIdLiteral(IdLiteral node) throws SemanticException
+    {
+	VarSTE id_ste = this.mCurrentST.lookupVar(node.getLexeme());
+
+	if (id_ste != null) {
+		this.mCurrentST.setExpType(node, id_ste.getType());
+	} else throw new SemanticException("[" + node.getLine() + "," + node.getPos() +
+			"]: ID '" + node.getLexeme() + "' is not defined in this scope");
+    }
+
+    private Type iTypeToType(IType i) {
+	    if (i instanceof IntType) {
+		   return Type.INT;
+	    } else if (i instanceof BoolType) {
+		   return Type.BOOL;
+	    } else if (i instanceof VoidType) {
+		   return Type.VOID; 
+	    } else if (i instanceof ByteType) {
+		   return Type.BYTE; 
+	    } else if (i instanceof ColorType) {
+		   return Type.COLOR; 
+	    } else if (i instanceof ButtonType) {
+		   return Type.BUTTON;
+	    } else return null;
+    }
+
+    @Override
+    public void visitIdLiteral(IdLiteral node)
+    {
+        inIdLiteral(node);
+        outIdLiteral(node);
+    }
+
+    public void inCallExp(CallExp node)
+    {
+        defaultIn(node);
+    }
+
+    public void outCallExp(CallExp node)
+    {
+	    List<Type> args = new ArrayList<Type>();
+	    for(IExp e : node.getArgs()) {
+		    args.add(mCurrentST.getExpType(e));
+	    }
+	    typeCheck(node.getExp(), node.getId(), args);
+	    MethodSTE mste = mCurrentST.lookupMethod(node.getId());
+	    mCurrentST.setExpType(node, mste.getReturnType());
+    }
+
+    @Override
+    public void visitCallExp(CallExp node)
+    {
+        inCallExp(node);
+        if(node.getExp() != null)
+        {
+            node.getExp().accept(this);
+        }
+        {
+            List<IExp> copy = new ArrayList<IExp>(node.getArgs());
+            for(IExp e : copy)
+            {
+                e.accept(this);
+            }
+        }
+        outCallExp(node);
+    }
+
+    public void inCallStatement(CallStatement node)
+    {
+        defaultIn(node);
+    }
+
+    public void outCallStatement(CallStatement node)
+    {
+	    List<Type> args = new ArrayList<Type>();
+	    for(IExp e : node.getArgs()) {
+		    args.add(mCurrentST.getExpType(e));
+	    }
+	    typeCheck(node.getExp(), node.getId(), args);
+	    Type retType = mCurrentST.getExpType(node.getExp());
+	    mCurrentST.setExpType(node, retType);
+    }
+
+    @Override
+    public void visitCallStatement(CallStatement node)
+    {
+        inCallStatement(node);
+        if(node.getExp() != null)
+        {
+            node.getExp().accept(this);
+        }
+        {
+            List<IExp> copy = new ArrayList<IExp>(node.getArgs());
+            for(IExp e : copy)
+            {
+                e.accept(this);
+            }
+        }
+        outCallStatement(node);
+    }
+
+    public void typeCheck(IExp rec, String metName, List<Type> args) {
+	    ClassSTE c_ste = null;
+	    if (mCurrentST.getExpType(rec) == Type.CLASS) {
+		    if (rec instanceof NewExp) {
+			    c_ste = mCurrentST.lookupClass(((NewExp)rec).getId());
+		    } else if (rec instanceof ThisLiteral) {
+			    c_ste = currClass;
+		    }
+	    } else {
+		    throw new SemanticException(rec + " is not a valid receiver");
+	    }
+	    if (c_ste == null)
+		    throw new SemanticException("'" + rec + "' is not a valid receiver");
+	    STE m_ste = c_ste.getScope().lookup(metName);
+
+	    if (m_ste == null)
+		    throw new SemanticException("'" + metName +
+				    "' is not a method in '" + rec + "'");
+	    if (m_ste instanceof MethodSTE) {
+		    List<Type> actuals = ((MethodSTE)m_ste).getParams();
+		    if (actuals.size() != args.size())
+			    throw new SemanticException("Incorrect number of arguments for method '"
+					    + rec + "." + metName + "(" + actuals + ")");
+		    if (!actuals.equals(args))
+			    throw new SemanticException("Arguments to '" + rec + "." + metName +
+					    "' must be (" + actuals + ")");
+	    }
+    }
+
+
+    public void inNewExp(NewExp node)
+    {
+        defaultIn(node);
+    }
+
+    public void outNewExp(NewExp node)
+    {
+	if(mCurrentST.lookup(node.getId()) != null) {
+		mCurrentST.setExpType(node, Type.CLASS);
+	}
+    }
+
+    @Override
+    public void visitNewExp(NewExp node)
+    {
+        inNewExp(node);
+        outNewExp(node);
+    }
+
+    public void inFormal(Formal node)
+    {
+	    defaultIn(node);
+    }
+
+    public void outFormal(Formal node)
+    {
+	mCurrentST.setExpType(node, iTypeToType(node.getType()));
+    }
+
+    @Override
+    public void visitFormal(Formal node)
+    {
+        inFormal(node);
+        if(node.getType() != null)
+        {
+            node.getType().accept(this);
+        }
+        outFormal(node);
+    }
+
+    public void inVoidType(VoidType node)
+    {
+        defaultIn(node);
+    }
+
+    public void outVoidType(VoidType node)
+    {
+	    mCurrentST.setExpType(node, Type.VOID);
+    }
+
+    @Override
+    public void visitVoidType(VoidType node)
+    {
+        inVoidType(node);
+        outVoidType(node);
+    }
+
+    public void inByteType(ByteType node)
+    {
+        defaultIn(node);
+    }
+
+    public void outByteType(ByteType node)
+    {
+	    mCurrentST.setExpType(node, Type.BYTE);
+    }
+
+    @Override
+    public void visitByteType(ByteType node)
+    {
+        inByteType(node);
+        outByteType(node);
+    }
+
+    public void inThisExp(ThisLiteral node)
+    {
+        defaultIn(node);
+    }
+
+    public void outThisExp(ThisLiteral node)
+    {
+    }
+
+    @Override
+    public void visitThisLiteral(ThisLiteral node)
+    {
+        inThisExp(node);
+        outThisExp(node);
+    }
+
+    public void inLtExp(LtExp node)
+    {
+        defaultIn(node);
+    }
+
+    public void outLtExp(LtExp node)
+    {
+	    if ((mCurrentST.getExpType(node.getLExp()) != Type.INT) &&
+			    (mCurrentST.getExpType(node.getLExp()) != Type.BYTE)) {
+		    throw new SemanticException("Invalid lefthand operator for <");
+			    }
+	    if ((mCurrentST.getExpType(node.getRExp()) != Type.INT) &&
+			    (mCurrentST.getExpType(node.getRExp()) != Type.BYTE)) {
+		    throw new SemanticException("Invalid righthand operator for <");
+			    }
+	    mCurrentST.setExpType(node, Type.BOOL);
+    }
+
+    @Override
+    public void visitLtExp(LtExp node)
+    {
+        inLtExp(node);
+        if(node.getLExp() != null)
+        {
+            node.getLExp().accept(this);
+        }
+        if(node.getRExp() != null)
+        {
+            node.getRExp().accept(this);
+        }
+        outLtExp(node);
+    }
 }

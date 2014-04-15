@@ -22,7 +22,8 @@ public final class TopClassDecl extends IClassDecl
 
         setName(_name_);
 
-        setVarDecls(_varDecls_);
+	if (_varDecls_ != null)
+        	setVarDecls(_varDecls_);
 
         setMethodDecls(_methodDecls_);
 

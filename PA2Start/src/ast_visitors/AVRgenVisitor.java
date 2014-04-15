@@ -22,12 +22,15 @@ import symtable.*;
 public class AVRgenVisitor extends DepthFirstVisitor {
 
    private static int labNum = 0;
+   private static int regNum = 24;
 
+   private String currClass;
    private PrintWriter out;
    private SymTable currentST;
 
    public AVRgenVisitor(PrintWriter out, SymTable symT)
    {
+	   System.out.println("Code gen");
 	   this.out = out;
 	   this.currentST = symT;
    }
@@ -320,7 +323,38 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outCallExp(CallExp node)
     {
-        defaultOut(node);
+	String recv = "";
+	if (node.getExp() instanceof NewExp) {
+		recv = (((NewExp)node.getExp()).getId());
+	} else if (node.getExp() instanceof ThisLiteral) {
+		recv = currClass;
+	}
+	ClassSTE cste = currentST.lookupClass(recv);
+
+	currentST.pushScope(recv);
+
+	String met = node.getId();
+	MethodSTE mste = currentST.lookupMethod(met);
+	currentST.popScope();
+
+	int numParams = mste.getParams().size();
+	regNum = 24 - 2*numParams;
+
+	out.println("    #### function call");
+	Type t;
+	for (int i = numParams-1; i >= 0; i--) {
+		t = mste.getParams().get(i);
+		out.println("    pop	r" + regNum);
+		if (t.getAVRTypeSize() == 2)
+			out.println("    pop	r" + (regNum + 1));
+		regNum += 2;
+	}
+	out.println("    # receiver passed as first param");
+	out.println("    pop	r24");
+	out.println("    pop	r25");
+	out.println();
+	out.println("    call	" + recv + met);
+	out.println();
     }
 
     @Override
@@ -348,7 +382,38 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outCallStatement(CallStatement node)
     {
-        defaultOut(node);
+	String recv = "";
+	if (node.getExp() instanceof NewExp) {
+		recv = (((NewExp)node.getExp()).getId());
+	} else if (node.getExp() instanceof ThisLiteral) {
+		recv = currClass;
+	}
+	ClassSTE cste = currentST.lookupClass(recv);
+
+	currentST.pushScope(recv);
+
+	String met = node.getId();
+	MethodSTE mste = currentST.lookupMethod(met);
+	currentST.popScope();
+
+	int numParams = mste.getParams().size();
+	regNum = 24 - 2*numParams;
+
+	out.println("    #### function call");
+	Type t;
+	for (int i = numParams - 1; i >= 0; i--) {
+		t = mste.getParams().get(i);
+		out.println("    pop	r" + regNum);
+		if (t.getAVRTypeSize() == 2)
+			out.println("    pop	r" + (regNum + 1));
+		regNum += 2;
+	}
+	out.println("    # receiver passed as first param");
+	out.println("    pop	r24");
+	out.println("    pop	r25");
+	out.println();
+	out.println("    call	" + recv + met);
+	out.println();
     }
 
     @Override
@@ -523,7 +588,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	out.println("    jmp " + done_label);
 	out.println(false_label + ":");
 	out.println("    ldi r24, 0");
-	out.println("    push r24");
+	//out.println("    push r24");
 	out.println("    # end label for ==");
 	out.println(done_label + ":");
 	out.println("    push r24");
@@ -560,7 +625,14 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outFormal(Formal node)
     {
-        defaultOut(node);
+	    VarSTE v_ste = currentST.lookupVar(node.getName());
+	    out.print("    std	" + v_ste.getBase() + " + ");
+	    if (v_ste.getType().getAVRTypeSize() == 2) {
+		    out.print((v_ste.getOffset() + 2) + ", r");
+		    out.println(regNum + 1);
+		    out.print("    std	" + v_ste.getBase() + " + ");
+	    }
+	    out.println((v_ste.getOffset() + 1) + ", r" + regNum);
     }
 
     @Override
@@ -581,7 +653,11 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outIdLiteral(IdLiteral node)
     {
-        defaultOut(node);
+	    out.println("     # Load variable " + node.getLexeme());
+	    VarSTE v = currentST.lookupVar(node.getLexeme());
+	    out.print("    ldd	r24, " + v.getBase() + " + ");
+	    out.println(v.getOffset() + 1);
+	    out.println("    push r24");
     }
 
     @Override
@@ -747,7 +823,9 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void inLtExp(LtExp node)
     {
-        defaultIn(node);
+	out.println("    # < operator");
+	out.println("    # < : left operand");
+	out.println();
     }
 
     public void outLtExp(LtExp node)
@@ -763,10 +841,48 @@ public class AVRgenVisitor extends DepthFirstVisitor {
         {
             node.getLExp().accept(this);
         }
+	out.println("    # < : right operand");
+	out.println();
+
         if(node.getRExp() != null)
         {
             node.getRExp().accept(this);
         }
+
+	String done_label = getLabel();
+	String false_label = getLabel();
+	String true_label = getLabel();
+
+	out.println("    # < : pop both operands and promote bytes to ints");
+	out.println("    # < : compare operands");
+	out.println();
+	out.println("    pop r24");
+	if (currentST.getExpType(node.getRExp()) == Type.INT) {
+		out.println("    pop r25");
+	} else {
+		byteToInt("r24", "r25");
+	}
+	out.println("    pop r22");
+	if (currentST.getExpType(node.getLExp()) == Type.INT) {
+		out.println("    pop r23");
+	} else {
+		byteToInt("r22", "r23");
+	}
+	out.println("    cp r23, r25");
+	out.println("    brlt " + true_label);
+	out.println("    brne " + false_label);
+	out.println("    cp r22, r24");
+	out.println("    brlt " + true_label);
+	out.println(false_label + ":");
+	out.println("    ldi r24, 0");
+	out.println("    jmp " + done_label);
+	out.println(true_label + ":");
+	out.println("    ldi r24, 1");
+	//out.println("    push r24");
+	out.println("    # end label for <");
+	out.println(done_label + ":");
+	out.println("    push r24");
+	out.println();
         outLtExp(node);
     }
 
@@ -777,7 +893,12 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outMainClass(MainClass node)
     {
-        defaultOut(node);
+	out.println("/* epilogue start */");
+	out.println("    endLabel:");
+	out.println("    jmp endLabel");
+	out.println("    ret");
+	out.println("    .size   main, .-main");
+	out.println();
     }
 
     @Override
@@ -979,12 +1100,49 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void inMethodDecl(MethodDecl node)
     {
-        defaultIn(node);
+	String name = currClass + node.getName();
+	out.println("    .text");
+	out.println(".global " + name);
+	out.println("    .type " + name  + ", @function");
+	out.println(name + ':');
+	out.println("    push	r29");
+	out.println("    push	r28");
+	out.println("    # Make space for params");
+	out.println("    ldi	r30, 0");
+	for (int i = 0; i < currentST.lookupMethod(node.getName()).getSize(); ++i)
+	{
+		out.println("    push	r30");
+	}
+	out.println("    # Copy stack pointer to frame pointer");
+	out.println("    in	r28,__SP_L__");
+	out.println("    in	r29,__SP_H__");
+	out.println();
+	currentST.pushScope(node.getName());
     }
 
     public void outMethodDecl(MethodDecl node)
     {
-        defaultOut(node);
+	    MethodSTE mste = currentST.lookupMethod(node.getName());
+	    out.println("# Epilogue for " + node.getName());
+	    out.println();
+	    if (mste.getReturnType() != Type.VOID) {
+		    out.println("    # Pop return value");
+		    if (mste.getReturnType().getAVRTypeSize() == 2)
+			    out.println("    pop	r25");
+		    out.println("    pop	r24");
+	    }
+
+	    for (int i = 0; i < currentST.lookupMethod(node.getName()).getSize(); ++i)
+	    {
+		out.println("    pop	r30");
+	    }
+	    out.println("    # restoring the frame pointer");
+	    out.println("    pop	r28");
+	    out.println("    pop	r29");
+	    out.println("    ret");
+	    out.println("    .size " + node.getName() + ", .-" + node.getName());
+	    out.println();
+	    currentST.popScope();
     }
 
     @Override
@@ -995,11 +1153,16 @@ public class AVRgenVisitor extends DepthFirstVisitor {
         {
             node.getType().accept(this);
         }
+	out.println("    # save off parameters");
         {
+	    out.println("    std	Y + 2, r25");
+	    out.println("    std	Y + 1, r24");
+	    regNum = 22;
             List<Formal> copy = new ArrayList<Formal>(node.getFormals());
             for(Formal e : copy)
             {
                 e.accept(this);
+		regNum -= 2;
             }
         }
         {
@@ -1131,7 +1294,17 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outNewExp(NewExp node)
     {
-        defaultOut(node);
+	    out.println("    # NewExp");
+	    out.print("    ldi	r24, lo8(");
+	    out.print(currentST.lookupClass(node.getId()).getSize());
+	    out.println(")");
+	    out.print("    ldi	r25, hi8(");
+	    out.print(currentST.lookupClass(node.getId()).getSize());
+	    out.println(")");
+	    out.println("    call	malloc");
+	    out.println("    push	r25");
+	    out.println("    push	r24");
+	    out.println();
     }
 
     @Override
@@ -1281,11 +1454,6 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outProgram(Program node)
     {
-	out.println("/* epilogue start */");
-	out.println("    endLabel:");
-	out.println("    jmp endLabel");
-	out.println("    ret");
-	out.println("    .size   main, .-main");
 	out.flush();
     }
 
@@ -1361,12 +1529,13 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void inTopClassDecl(TopClassDecl node)
     {
-        defaultIn(node);
+	    currClass = node.getName();
+	    currentST.pushScope(node.getName());
     }
 
     public void outTopClassDecl(TopClassDecl node)
     {
-        defaultOut(node);
+	    currentST.popScope();
     }
 
     @Override

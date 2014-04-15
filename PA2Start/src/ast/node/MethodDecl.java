@@ -30,7 +30,8 @@ public final class MethodDecl extends Node
 
         setFormals(_formals_);
 
-        setVarDecls(_varDecls_);
+	if (_varDecls_ != null)
+		setVarDecls(_varDecls_);
 
         setStatements(_statements_);
 
