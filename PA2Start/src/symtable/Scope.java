@@ -1,10 +1,11 @@
 package symtable;
-import java.util.HashMap;
+import java.util.*;
 /* Scope class for SymTable's Scope Stack */
 public class Scope {
 
 	private final HashMap<String, STE> mHashMap = new HashMap<String, STE>();
 	private Scope mEnclosing;
+	private final ArrayList<String> syms = new ArrayList<String>();
 	public Scope(Scope encl) {
 		mEnclosing = encl;
 	}
@@ -19,16 +20,15 @@ public class Scope {
 		}
 	}
 
-	public void printSyms() {
-		for (String s : mHashMap.keySet()) {
-			System.out.println(s);
-		}
+	public List<String> getSyms() {
+		return syms;
 	}
 	public STE lookupInnermost(String sym) {
 		return mHashMap.get(sym);
 	}
 
 	public void insert(STE entry) {
+		syms.add(entry.getName());
 		mHashMap.put(entry.getName(), entry);
 	}
 }

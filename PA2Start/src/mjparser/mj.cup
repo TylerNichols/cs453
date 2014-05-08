@@ -98,6 +98,7 @@ non terminal LinkedList<IExp> comma_exp_list;
 non terminal LinkedList<Formal> comma_list;
 non terminal Formal formal;
 non terminal IType type;
+non terminal VarDecl var_decl;
 
 /* Declare precedence and associativity  here */
 precedence left ELSE;
@@ -158,6 +159,12 @@ class_decl ::=
 	CLASS:start ID:name LBRACE method_decl_list:list RBRACE
 	{:
 		RESULT = new TopClassDecl(start.line, start.pos, name.lexeme, null, list);
+	:}
+    ;
+var_decl ::=
+	type:t ID:id SEMI
+	{:
+		RESULT = new VarDecl(t.getLine(), t.getPos(), t, id.lexeme);
 	:}
     ;
 method_decl_list ::=
@@ -264,6 +271,10 @@ type ::=
 	{:
 		RESULT = new ToneType(t.line, t.pos);
 	:}
+    |	ID:id
+	{:
+		RESULT = new ClassType(id.line, id.pos, id.lexeme);
+	:}
     ;
 statement ::=
 
@@ -276,6 +287,10 @@ statement ::=
 	RPAREN SEMI
 	{:
 		RESULT = new MeggySetPixel(start.line, start.pos, x_arg, y_arg, col);
+	:}
+    |	MEGGYTONESTART:start LPAREN exp:t COMMA exp:l RPAREN SEMI
+	{:
+		RESULT = new MeggyToneStart(start.line, start.pos, t, l);
 	:}
     |	MEGGYDELAY:start LPAREN exp:arg RPAREN SEMI
 	{:
@@ -296,6 +311,10 @@ statement ::=
     |	WHILE:start LPAREN exp:e RPAREN statement:s
 	{:
 		RESULT = new WhileStatement(start.line, start.pos, e, s);
+	:}
+    |	ID:id ASSIGN exp:e SEMI
+	{:
+		RESULT = new AssignStatement(id.line, id.pos, id.lexeme, e);
 	:}
     ;
 exp_list ::=
@@ -383,6 +402,10 @@ exp ::=
     |	BUTTON_LITERAL:button
 	{:
 		RESULT = new ButtonLiteral(button.line, button.pos, button.lexeme, button.value);
+	:}
+    |	TONE_LITERAL:tone
+	{:
+		RESULT = new ToneLiteral(tone.line, tone.pos, tone.lexeme, tone.value);
 	:}
     |   TRUE:t
 	{:

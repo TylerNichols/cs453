@@ -157,12 +157,12 @@ public class BuildSymTable extends DepthFirstVisitor
 
     public void inBoolType(BoolType node)
     {
-        this.mCurrentST.setExpType(node, Type.BOOL);
+        defaultIn(node);
     }
 
     public void outBoolType(BoolType node)
     {
-        defaultOut(node);
+        this.mCurrentST.setExpType(node, Type.BOOL);
     }
 
     @Override
@@ -460,6 +460,8 @@ public class BuildSymTable extends DepthFirstVisitor
 		   t = Type.COLOR; 
 	    } else if (node.getType() instanceof ButtonType) {
 		   t = Type.BUTTON;
+	    } else if (node.getType() instanceof ToneType) {
+		   t = Type.TONE;
 	    } else throw new SemanticException("Parameter '" + node.getName()
 			   + "' is of an unrecognized type");
 	    VarSTE v_ste = new VarSTE(node.getName(), t);
@@ -855,6 +857,8 @@ public class BuildSymTable extends DepthFirstVisitor
 		   return Type.COLOR; 
 	    } else if (i instanceof ButtonType) {
 		   return Type.BUTTON;
+	    } else if (i instanceof ToneType) {
+		   return Type.TONE;
 	    } else return null;
     }
 
@@ -1071,7 +1075,7 @@ public class BuildSymTable extends DepthFirstVisitor
 
     public void outToneExp(ToneLiteral node)
     {
-        defaultOut(node);
+	    this.mCurrentST.setExpType(node, Type.TONE);
     }
 
     @Override
@@ -1089,7 +1093,7 @@ public class BuildSymTable extends DepthFirstVisitor
 
     public void outToneType(ToneType node)
     {
-        defaultOut(node);
+	    this.mCurrentST.setExpType(node, Type.TONE);
     }
 
     @Override

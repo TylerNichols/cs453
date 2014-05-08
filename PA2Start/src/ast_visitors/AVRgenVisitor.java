@@ -30,7 +30,6 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
    public AVRgenVisitor(PrintWriter out, SymTable symT)
    {
-	   System.out.println("Code gen");
 	   this.out = out;
 	   this.currentST = symT;
    }
@@ -51,7 +50,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
 	   out.println("    # Promote byte to int");
 	   out.println("    tst " + loReg);
-	   out.println("    brlt " + neg_label);
+	   out.println("    brmi " + neg_label);
 	   out.println("    ldi " + hiReg + ", 0");
 	   out.println("    jmp " + done_label);
 	   out.println(neg_label + ":");
@@ -106,6 +105,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	out.println();
 	out.println(true_label + ":");
 	out.println("    # &&: right operand");
+	out.println("    pop r24");
 	out.println();
 
         if(node.getRExp() != null)
@@ -342,11 +342,18 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
 	out.println("    #### function call");
 	Type t;
+	LinkedList<Type> args = new LinkedList<Type>();
+	for (IExp e : node.getArgs())
+		args.add(currentST.getExpType(e));
 	for (int i = numParams-1; i >= 0; i--) {
 		t = mste.getParams().get(i);
 		out.println("    pop	r" + regNum);
 		if (t.getAVRTypeSize() == 2)
-			out.println("    pop	r" + (regNum + 1));
+			if (args.get(i).getAVRTypeSize() == 1) {
+				byteToInt("r" + regNum, "r" + (regNum + 1));
+			} else {
+				out.println("    pop	r" + (regNum + 1));
+			}
 		regNum += 2;
 	}
 	out.println("    # receiver passed as first param");
@@ -354,6 +361,11 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	out.println("    pop	r25");
 	out.println();
 	out.println("    call	" + recv + met);
+	out.println("    # Push return value");
+	if (mste.getReturnType().getAVRTypeSize() > 1) {
+		out.println("    push	r25");
+	}
+	out.println("    push	r24");
 	out.println();
     }
 
@@ -655,6 +667,11 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     {
 	    out.println("     # Load variable " + node.getLexeme());
 	    VarSTE v = currentST.lookupVar(node.getLexeme());
+	    if (v.getType().getAVRTypeSize() > 1) {
+		    out.print("    ldd	r24, " + v.getBase() + " + ");
+		    out.println(v.getOffset() + 2);
+			out.println("    push r24");
+	    }
 	    out.print("    ldd	r24, " + v.getBase() + " + ");
 	    out.println(v.getOffset() + 1);
 	    out.println("    push r24");
@@ -850,30 +867,40 @@ public class AVRgenVisitor extends DepthFirstVisitor {
         }
 
 	String done_label = getLabel();
-	String false_label = getLabel();
 	String true_label = getLabel();
 
+	if ((currentST.getExpType(node.getLExp()) == Type.BYTE) &&
+			currentST.getExpType(node.getRExp()) == Type.BYTE) {
+		out.println("    # less than for two bytes");
+		out.println("    pop	r25");
+		out.println("    pop	r24");
+		out.println("    cp	r24, r25");
+		out.println("    brlt " + true_label);
+		out.println("    ldi	r24, 0");
+		out.println("    jmp	" + done_label);
+		out.println(true_label + ":");
+		out.println("    ldi	r24, 1");
+		out.println(done_label + ":");
+		out.println("    push r24");
+	}
 	out.println("    # < : pop both operands and promote bytes to ints");
 	out.println("    # < : compare operands");
 	out.println();
-	out.println("    pop r24");
-	if (currentST.getExpType(node.getRExp()) == Type.INT) {
-		out.println("    pop r25");
-	} else {
-		byteToInt("r24", "r25");
-	}
 	out.println("    pop r22");
-	if (currentST.getExpType(node.getLExp()) == Type.INT) {
+	if (currentST.getExpType(node.getRExp()) == Type.INT) {
 		out.println("    pop r23");
 	} else {
 		byteToInt("r22", "r23");
 	}
-	out.println("    cp r23, r25");
+	out.println("    pop r24");
+	if (currentST.getExpType(node.getLExp()) == Type.INT) {
+		out.println("    pop r25");
+	} else {
+		byteToInt("r24", "r25");
+	}
+	out.println("    sub r24, r22");
+	out.println("    sbc r25, r23");
 	out.println("    brlt " + true_label);
-	out.println("    brne " + false_label);
-	out.println("    cp r22, r24");
-	out.println("    brlt " + true_label);
-	out.println(false_label + ":");
 	out.println("    ldi r24, 0");
 	out.println("    jmp " + done_label);
 	out.println(true_label + ":");
@@ -1074,13 +1101,23 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     }
 
     public void inMeggyToneStart(MeggyToneStart node)
-    {
+    {	//"_Z10Tone_Startjj"
         defaultIn(node);
     }
 
     public void outMeggyToneStart(MeggyToneStart node)
     {
-        defaultOut(node);
+	    out.println("    # Call Meggy.toneStart(color, int)");
+	    out.println("    pop    r22");
+	    if (currentST.getExpType(node.getDurationExp()) == Type.BYTE) {
+		    byteToInt("r22", "r23");
+	    } else {
+		    out.println("    pop   r23");
+	    }
+	    out.println("    pop    r24");
+	    out.println("    pop    r25");
+	    out.println("    call   _Z10Tone_Startjj");
+	    out.println();
     }
 
     public void visitMeggyToneStart(MeggyToneStart node)
@@ -1123,7 +1160,8 @@ public class AVRgenVisitor extends DepthFirstVisitor {
     public void outMethodDecl(MethodDecl node)
     {
 	    MethodSTE mste = currentST.lookupMethod(node.getName());
-	    out.println("# Epilogue for " + node.getName());
+	    String name = currClass + node.getName();
+	    out.println("# Epilogue for " + name);
 	    out.println();
 	    if (mste.getReturnType() != Type.VOID) {
 		    out.println("    # Pop return value");
@@ -1131,7 +1169,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 			    out.println("    pop	r25");
 		    out.println("    pop	r24");
 	    }
-
+	    out.println("    # Pop params");
 	    for (int i = 0; i < currentST.lookupMethod(node.getName()).getSize(); ++i)
 	    {
 		out.println("    pop	r30");
@@ -1140,7 +1178,7 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 	    out.println("    pop	r28");
 	    out.println("    pop	r29");
 	    out.println("    ret");
-	    out.println("    .size " + node.getName() + ", .-" + node.getName());
+	    out.println("    .size " + name + ", .-" + name);
 	    out.println();
 	    currentST.popScope();
     }
@@ -1193,22 +1231,31 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outMinusExp(MinusExp node)
     {
-	out.println("    # Subtract the two ints on the stack");
-	out.println("    pop    r18");
-	if (currentST.getExpType(node.getRExp()) == Type.BYTE) {
-		byteToInt("r18", "r19");
-	} else {
-		out.println("    pop    r19");
-	}
-	out.println("    pop    r24");
-	if (currentST.getExpType(node.getLExp()) == Type.BYTE) {
-		byteToInt("r24", "r25");
-	} else {
-		out.println("    pop    r25");
-	}
-	out.println("    # Do subtract operation");
-	out.println("    sub    r24, r18");
-	out.println("    sbc    r25, r19");
+//	if ((currentST.getExpType(node.getRExp()) == Type.BYTE) &&
+//			(currentST.getExpType(node.getLExp()) == Type.BYTE)) {
+//		out.println("    # Subtract 2 bytes off stack");
+//		out.println("    pop	r24");
+//		out.println("    pop	r22");
+//		out.println("    sub	r22,r24");
+//		byteToInt("r22", "r23");
+//	} else {
+		out.println("    # Subtract the two ints on the stack");
+		out.println("    pop    r18");
+		if (currentST.getExpType(node.getRExp()) == Type.BYTE) {
+			byteToInt("r18", "r19");
+		} else {
+			out.println("    pop    r19");
+		}
+		out.println("    pop    r24");
+		if (currentST.getExpType(node.getLExp()) == Type.BYTE) {
+			byteToInt("r24", "r25");
+		} else {
+			out.println("    pop    r25");
+		}
+		out.println("    # Do subtract operation");
+		out.println("    sub    r24, r18");
+		out.println("    sbc    r25, r19");
+//	}
 	out.println("    # push two byte expression onto stack");
 	out.println("    push   r25");
 	out.println("    push   r24");
@@ -1482,7 +1529,12 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outThisExp(ThisLiteral node)
     {
-        defaultOut(node);
+	    out.println("    # Receiver will be 'this'");
+	    out.println("    ldd	r25, Y + 2");
+	    out.println("    ldd	r24, Y + 1");
+	    out.println("    push	r25");
+	    out.println("    push	r24");
+	    out.println();
     }
 
     @Override
@@ -1499,7 +1551,12 @@ public class AVRgenVisitor extends DepthFirstVisitor {
 
     public void outToneExp(ToneLiteral node)
     {
-        defaultOut(node);
+	out.println("    # Push tone " + node.getLexeme() + "onto stack");
+	out.println("    ldi	r24, lo8(" + node.getIntValue() + ')');
+	out.println("    ldi	r25, hi8(" + node.getIntValue() + ')');
+	out.println("    push	r25");
+	out.println("    push	r24");
+	out.println();
     }
 
     @Override

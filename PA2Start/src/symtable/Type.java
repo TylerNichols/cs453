@@ -13,6 +13,7 @@ public class Type
   public static final Type BUTTON = new Type();
   public static final Type VOID = new Type();
   public static final Type CLASS = new Type();
+  public static final Type TONE = new Type();
 
   private Type()
   {
@@ -59,6 +60,10 @@ public class Type
     {
 	    return "CLASS";
     }
+    if(this == TONE)
+    {
+	    return "TONE";
+    }
 
     
 /*
@@ -68,6 +73,7 @@ public class Type
   
   public int getAVRTypeSize() {
       if(this == INT) { return 2; }
+      if(this == TONE) {return 2; }
       if(this == BOOL) { return 1; }
       if(this == BYTE) { return 1; }
       if(this == COLOR) { return 1; }

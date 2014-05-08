@@ -49,7 +49,6 @@ public class MJDriver {
 
           // and parse
           Program ast_root = (Program) parser.parse().value;
-	  System.out.println("Assembly code written to " + parser.programName + ".s");
                 
           // print ast to file
           java.io.PrintStream astout =
@@ -66,14 +65,14 @@ public class MJDriver {
 	  //allocVars
 	  AVRallocVars allocVars = new AVRallocVars(globalST);
 	  ast_root.accept(allocVars);
-/* 
+ 
           // print ST to file
           java.io.PrintStream STout =
             new java.io.PrintStream(
                 new java.io.FileOutputStream(filename + ".ST.dot"));
           System.out.println("Printing symbol table to " + filename + ".ST.dot");
           globalST.outputDot(STout);
-*/
+
           // perform type checking
           ast_root.accept(new CheckTypes(globalST));
  /*         
@@ -107,6 +106,10 @@ public class MJDriver {
             System.err.println(e.getMessage());
             System.exit(1);
        
+        } catch(exceptions.InternalException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
