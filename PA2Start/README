@@ -1,32 +1,14 @@
 Stephen Zapp
-CS453 PA3
+CS453 PA4
 
-The compiler is completely implemented; all regression tests pass except:
+This is the PA4 compiler, and everything is implemented. I expect everything to
+work, including widening of bytes passed as int parameters. Maze Solver also
+works.
 
-For some reason, IfStmt.java (off the class website) executes the full 25
-function calls (defined in meggy/arg_opts) when compiled with my compiler but
-only executes each function call once when compiled with javac (regardless of
-the number in arg_opts). So the output from my compiled program has the
-correct lines, but when arg_opts is > 5 they will be repeated and this shows
-in the diff of the regression test. Not sure why the javac version seems to
-ignore the arg_opts specification here.
-
-TestCases added to TestCasesMeggy/:
-Byte.java
-CondExpr.java
-If.java
-IfStmt.java
-PA2FlowerSimple.java
-PA2bluedot.java
-PA2error.java
-PA3buttondot.java
-PA3ifdots.java
-PA3simple.java
-PA3testif.java
-
-TestCases added to TestCasesMeggy/WorkingErrorTestCases:
-PA2error.java
-bytecast.java
-delaytest.java
-eqtest.java
-promote.java
+New Test Cases:
+	   TestCasesMeggy/MoreClasses.java
+	   TestCasesMeggy/OneCond.java
+	   TestCasesMeggy/PA4MazeSolver.java
+	   TestCasesMeggy/PA4bluedot.java
+	   TestCasesMeggy/RecTest.java
+	   TestCasesMeggy/Widen.java
