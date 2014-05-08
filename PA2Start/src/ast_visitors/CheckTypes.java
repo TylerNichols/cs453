@@ -707,23 +707,6 @@ public class CheckTypes extends DepthFirstVisitor
         outToneExp(node);
     }
 
-    public void inToneType(ToneType node)
-    {
-        defaultIn(node);
-    }
-
-    public void outToneType(ToneType node)
-    {
-        defaultOut(node);
-    }
-
-    @Override
-    public void visitToneType(ToneType node)
-    {
-        inToneType(node);
-        outToneType(node);
-    }
-
     public void inBoolType(BoolType node)
     {
         defaultIn(node);
@@ -739,6 +722,90 @@ public class CheckTypes extends DepthFirstVisitor
     {
         inBoolType(node);
         outBoolType(node);
+    }
+
+    public void inIntType(IntType node)
+    {
+        defaultIn(node);
+    }
+
+    public void outIntType(IntType node)
+    {
+        mCurrentST.setExpType(node, Type.INT);
+    }
+
+    @Override
+    public void visitIntType(IntType node)
+    {
+        inIntType(node);
+        outIntType(node);
+    }
+
+    public void inToneType(ToneType node)
+    {
+        defaultIn(node);
+    }
+
+    public void outToneType(ToneType node)
+    {
+        mCurrentST.setExpType(node, Type.TONE);
+    }
+
+    @Override
+    public void visitToneType(ToneType node)
+    {
+        inToneType(node);
+        outToneType(node);
+    }
+
+    public void inColorType(ColorType node)
+    {
+        defaultIn(node);
+    }
+
+    public void outColorType(ColorType node)
+    {
+        mCurrentST.setExpType(node, Type.COLOR);
+    }
+
+    public void visitColorType(ColorType node)
+    {
+        inColorType(node);
+        outColorType(node);
+    }
+
+    public void inButtonType(ButtonType node)
+    {
+        defaultIn(node);
+    }
+
+    public void outButtonType(ButtonType node)
+    {
+        mCurrentST.setExpType(node, Type.BUTTON);
+    }
+
+    @Override
+    public void visitButtonType(ButtonType node)
+    {
+        inButtonType(node);
+        outButtonType(node);
+    }
+
+    public void inClassType(ClassType node)
+    {
+        defaultIn(node);
+    }
+
+    public void outClassType(ClassType node)
+    {
+        mCurrentST.setExpType(node, Type.CLASS);
+    }
+
+    @Override
+    public void visitClassType(ClassType node)
+    {
+        inClassType(node);
+        outClassType(node);
     }
 
 }
